@@ -39,33 +39,45 @@ def main():
         die('Error: first line of docstring is not a module name followed by a colon and a description in %s' % (init_path))
     package_name = pieces[0].strip()
     description = pieces[1].strip()
+    package_names = package_name.split('.')
+    namespace_packages = [ '.'.join(package_names[:i])
+                           for i in range(1, len(package_names)) ]
+    #import pdb; pdb.set_trace()
     setup_args = dict(
         name = package_name,
         description = description,
-        packages = [ package_name ],
-        package_dir = { package_name: '.' },
-        #namespace_packages = [ package_name ],
-        #zip_safe = False,
+        packages = [ package_name, 'cursive' ],
+        package_dir = { package_name: '..', 'cursive': 'namespace' },
+        namespace_packages = namespace_packages,
+        zip_safe = False,
         )
     import pprint
     pprint.pprint(setup_args)
-    if not os.path.exists('.pyzen'):
-        os.system('virtualenv .pyzen')
-    import setuptools
+
+    dotdir = os.path.join(base, '.pyzen')
+
+    if not os.path.exists(dotdir):
+        os.system('virtualenv ' + dotdir)
+        os.chdir(dotdir)
+        os.mkdir('namespace')
+        f = open(os.path.join('namespace', '__init__.py'), 'w')
+        f.write("from pkgutil import extend_path\n"
+                "__path__ = extend_path(__path__, __name__)\n")
+        f.close()
+    else:
+        os.chdir(dotdir)
+
+    python = os.path.join(base, '.pyzen', 'bin', 'python')
     #old_args = sys.argv[1:]
     #sys.argv[1:] = [
     #    #'clean', '--build-base', '.pyzen',
     #    'install', '--build-base', '.pyzen',
     #    ]
-    python = os.path.join(base, '.pyzen', 'bin', 'python')
-    dotdir = os.path.join(base, '.pyzen')
-    os.chdir(dotdir)
     f = open('setup.py', 'w')
-    f.write('import setuptools; setuptools.setup(**%r)' % setup_args)
+    f.write('import setuptools; setuptools.setup(**%r)\n' % setup_args)
     f.close()
     os.execl(python, python, 'setup.py',
              'clean', 'build', 'install')
-    #setuptools.setup(**args)
     if old_args and old_args[0] == 'python':
         print "go!"
-       # os.execvp('python', old_args[1:])
+        # os.execvp('python', old_args[1:])
