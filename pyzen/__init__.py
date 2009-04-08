@@ -19,6 +19,70 @@ def die(message):
     sys.stderr.write(message + '\n')
     sys.exit(1)
 
+NAMESPACE_INIT = ("import pkg_resources\n"
+                  "pkg_resources.declare_namespace(__name__)\n")
+INITS = set(('__init__.py', '__init__.pyc'))
+
+join = os.path.join
+
+class NamespaceStack(object):
+    """A NamespaceStack.
+
+    >>> n = NamespaceStack('/a/b', 'c.d.e')
+    >>> n.dirs
+    ['/a/b/c', '/a/b/c/d']
+    >>> n.inits
+    ['/a/b/c/__init__.py', '/a/b/c/d/__init__.py']
+    >>> n.symlink
+    ['/a/b/c/d/e']
+    >>> n.linkdest
+    ['../../..']
+
+    """
+
+    def __init__(self, base, package_names):
+        self.base = base
+        n = len(package_names)
+        levels = range(1, n)
+        self.dirs = [ join(*package_names[:i]) for i in levels ]
+        self.inits = [ join(d, '__init__.py') for d in self.dirs ]
+        self.symlink = join(*package_names)
+        self.linkdest = join(*['..'] * n)
+
+    def check(self):
+        """Return whether this namespace stack is correct."""
+        def content(p):
+            f = open(p)
+            c = f.read()
+            f.close()
+            return c
+
+        return (
+            all( os.path.isdir(d) for d in self.dirs ) and
+            all( len(set(os.listdir(d)) - INITS) == 1
+                 for d in self.dirs ) and
+            all( os.path.isfile(i) for i in self.inits ) and
+            all( content(i) == NAMESPACE_INIT for i in self.inits ) and
+            os.path.islink(self.symlink) and
+            os.readlink(self.symlink) == self.linkdest
+            )
+
+    def build(self):
+        """Build this namespace stack."""
+        def writeout(p, s):
+            f = open(p, 'w')
+            f.write(s)
+            f.close()
+
+        base = self.dirs[0] if self.dirs else self.symlink
+        if os.path.exists(base):
+            die("PLEASE REMOVE " + base) #shutil.rmtree(base)
+        for d in self.dirs:
+            os.mkdir(d) 
+        for i in self.inits:
+            writeout(i, NAMESPACE_INIT) 
+        os.symlink(self.linkdest, self.symlink)
+
 def main():
     base = os.getcwd() # TODO: allow command line to specify
     init_path = os.path.join(base, '__init__.py')
@@ -46,8 +110,7 @@ def main():
     setup_args = dict(
         name = package_name,
         description = description,
-        packages = [ package_name, 'cursive' ],
-        package_dir = { package_name: '..', 'cursive': 'namespace' },
+        packages = [ package_name ],
         namespace_packages = namespace_packages,
         zip_safe = False,
         )
@@ -58,17 +121,19 @@ def main():
 
     if not os.path.exists(dotdir):
         os.system('virtualenv ' + dotdir)
-        os.chdir(dotdir)
-        os.mkdir('namespace')
-        f = open(os.path.join('namespace', '__init__.py'), 'w')
-        f.write("from pkgutil import extend_path\n"
-                "__path__ = extend_path(__path__, __name__)\n")
-        f.close()
-    else:
-        os.chdir(dotdir)
+
+    os.chdir(dotdir)
+
+    # Next, create a tree of parent namespace packages.  If already
+    # present, then verify that it is correct; if verification fails,
+    # then rebuild it.
+
+    namespace_stack = NamespaceStack(dotdir, package_names)
+    if not namespace_stack.check():
+        namespace_stack.build()
 
     python = os.path.join(base, '.pyzen', 'bin', 'python')
-    #old_args = sys.argv[1:]
+    old_args = sys.argv[1:]
     #sys.argv[1:] = [
     #    #'clean', '--build-base', '.pyzen',
     #    'install', '--build-base', '.pyzen',
@@ -76,8 +141,8 @@ def main():
     f = open('setup.py', 'w')
     f.write('import setuptools; setuptools.setup(**%r)\n' % setup_args)
     f.close()
-    os.execl(python, python, 'setup.py',
-             'clean', 'build', 'install')
+    os.execl(python, python, 'setup.py', '-q',
+             'clean', 'develop')
     if old_args and old_args[0] == 'python':
         print "go!"
-        # os.execvp('python', old_args[1:])
+        os.execvp(python, python, old_args[1:])
