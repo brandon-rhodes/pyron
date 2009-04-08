@@ -20,8 +20,8 @@ def die(message):
     sys.exit(1)
 
 def main():
-    directory = os.getcwd() # TODO: allow command line to specify
-    init_path = os.path.join(directory, '__init__.py')
+    base = os.getcwd() # TODO: allow command line to specify
+    init_path = os.path.join(base, '__init__.py')
     init = open(init_path).read()
     suite = parser.suite(init)
     code = suite.compile()
@@ -37,5 +37,35 @@ def main():
     pieces = first_line.split(':', 1)
     if len(pieces) != 2:
         die('Error: first line of docstring is not a module name followed by a colon and a description in %s' % (init_path))
-    module_name, description = pieces
-    
+    package_name = pieces[0].strip()
+    description = pieces[1].strip()
+    setup_args = dict(
+        name = package_name,
+        description = description,
+        packages = [ package_name ],
+        package_dir = { package_name: '.' },
+        #namespace_packages = [ package_name ],
+        #zip_safe = False,
+        )
+    import pprint
+    pprint.pprint(setup_args)
+    if not os.path.exists('.pyzen'):
+        os.system('virtualenv .pyzen')
+    import setuptools
+    #old_args = sys.argv[1:]
+    #sys.argv[1:] = [
+    #    #'clean', '--build-base', '.pyzen',
+    #    'install', '--build-base', '.pyzen',
+    #    ]
+    python = os.path.join(base, '.pyzen', 'bin', 'python')
+    dotdir = os.path.join(base, '.pyzen')
+    os.chdir(dotdir)
+    f = open('setup.py', 'w')
+    f.write('import setuptools; setuptools.setup(**%r)' % setup_args)
+    f.close()
+    os.execl(python, python, 'setup.py',
+             'clean', 'build', 'install')
+    #setuptools.setup(**args)
+    if old_args and old_args[0] == 'python':
+        print "go!"
+       # os.execvp('python', old_args[1:])
