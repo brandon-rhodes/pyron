@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """A command-line DRY Python package builder
 
 This package contains the source code to support the ``pyron`` Python
@@ -7,11 +9,11 @@ command-line tool for building and installing packages.
 __version__ = '0.1'
 __testrunner__ = 'nose'
 
-import _ast, os.path, shutil, subprocess, sys
+import _ast, os.path, re, shutil, subprocess, sys
 from pprint import pformat
 
 def die(message):
-    sys.stderr.write('Error: ' + message + '\n')
+    sys.stderr.write('pyron: ' + message + '\n')
     sys.exit(1)
 
 NAMESPACE_INIT = ("import pkg_resources\n"
@@ -78,6 +80,42 @@ class NamespaceStack(object):
             writeout(i, NAMESPACE_INIT) 
         os.symlink(self.linkdest, self.symlink)
 
+README_NAMES = ('README', 'README.txt')
+
+def find_readme(directory):
+    candidates = [ join(directory, name) for name in README_NAMES ]
+    candidates = filter(os.path.isfile, candidates)
+    if not candidates:
+        die('your project must include either %s'
+            % ' or '.join(README_NAMES))
+    if len(candidates) > 1:
+        die('your project cannot supply both %s'
+            % ' and '.join(candidates))
+    return candidates[0]
+
+title_match = re.compile(ur'``([A-Za-z_.]+)``\W+(.*)').match
+
+def inspect_readme(path, info):
+    try:
+        f = open(path, 'U')
+        lines = f.readlines()
+        f.close()
+    except IOError, e:
+        die('cannot read your %s file: %s' % (path, e.strerror))
+
+    for line in lines:
+        line = line.strip()
+        match = title_match(line)
+        if match:
+            package_name, description = match.groups()
+            if all(package_name.split(u'.')):
+                return package_name, description
+
+    die('the beginning of your %s must look like'
+        ' (with your choice of punctuation):\n\n'
+        '``package`` -- description\n'
+        '--------------------------\n' % path)
+
 def parse(init_path):
     f = open(init_path)
     code = f.read()
@@ -107,6 +145,13 @@ def parse(init_path):
 
 def main():
     base = '.' # TODO: allow command line to specify
+    info = {} # will be filled in as we process files
+
+    # Determine whether the two that we require are present.
+
+    readme_path = find_readme(base)
+    inspect_readme(readme_path, info)
+
     init_path = os.path.join(base, '__init__.py')
     docstring, values = parse(init_path)
 
