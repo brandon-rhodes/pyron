@@ -83,6 +83,7 @@ class NamespaceStack(object):
 README_NAMES = ('README', 'README.txt')
 
 def find_readme(directory):
+    """Find under which name a project keeps its README file."""
     candidates = [ join(directory, name) for name in README_NAMES ]
     candidates = filter(os.path.isfile, candidates)
     if not candidates:
@@ -96,6 +97,7 @@ def find_readme(directory):
 title_match = re.compile(ur'``([A-Za-z_.]+)``\W+(.*)').match
 
 def inspect_readme(path, info):
+    """Look in a README file for a package name and description."""
     try:
         f = open(path, 'U')
         lines = f.readlines()
@@ -103,18 +105,23 @@ def inspect_readme(path, info):
     except IOError, e:
         die('cannot read your %s file: %s' % (path, e.strerror))
 
-    for line in lines:
-        line = line.strip()
-        match = title_match(line)
-        if match:
+    i = 0
+    while i < len(lines) and not lines[i].strip():
+        i += 1 # skip blank lines
+    if i + 1 < len(lines):
+        title = lines[i].strip()
+        underline = lines[i+1].strip()
+        match = title_match(title)
+        if (match and underline == underline[0] * len(underline)):
             package_name, description = match.groups()
             if all(package_name.split(u'.')):
-                return package_name, description
+                body = u'\n'.join(lines[i+2:]).lstrip('\n')
+                return body, package_name, description
 
     die('the beginning of your %s must look like'
         ' (with your choice of punctuation):\n\n'
         '``package`` -- description\n'
-        '--------------------------\n' % path)
+        '==========================\n' % path)
 
 def parse(init_path):
     f = open(init_path)
@@ -150,27 +157,19 @@ def main():
     # Determine whether the two that we require are present.
 
     readme_path = find_readme(base)
-    inspect_readme(readme_path, info)
+    body, package_name, description = inspect_readme(readme_path, info)
 
     init_path = os.path.join(base, '__init__.py')
     docstring, values = parse(init_path)
 
-    first_line = docstring.strip().split('\n', 1)[0].strip()
-    if not first_line:
-        die('Error: first line of docstring is blank in %s' % (init_path))
-    pieces = first_line.split(':', 1)
-    if len(pieces) != 2:
-        die('Error: first line of docstring is not a module name followed by a colon and a description in %s' % (init_path))
-    package_name = pieces[0].strip()
-    description = pieces[1].strip()
     package_names = package_name.split('.')
     namespace_packages = [ '.'.join(package_names[:i])
                            for i in range(1, len(package_names)) ]
-    #import pdb; pdb.set_trace()
+
     setup_args = dict(
         name = package_name,
         description = description,
-        #long_description = 'foof',
+        long_description = body,
         version = values['__version__'],
         packages = [ package_name ],
         namespace_packages = namespace_packages,
