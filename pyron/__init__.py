@@ -109,17 +109,27 @@ def parse(init_path):
 def main():
     base = '.' # TODO: allow command line to specify
 
-    # Determine whether the two that we require are present.
-
     readme_path = find_readme(base)
     package_name, description, body = inspect_readme(readme_path)
 
-    init_path = os.path.join(base, '__init__.py')
+    init_path = join(base, '__init__.py')
     values = parse(init_path)
 
     package_names = package_name.split('.')
     namespace_packages = [ '.'.join(package_names[:i])
                            for i in range(1, len(package_names)) ]
+
+    requires_path = join(base, 'requires.txt')
+    if os.path.exists(requires_path):
+        try:
+            f = open(requires_path)
+            requires = f.read().split()
+            f.close()
+        except IOError, e:
+            raise RuntimeError('cannot read your %s file: %s'
+                               % (requires_path, e.strerror))
+    else:
+        requires = []
 
     setup_args = dict(
         name = package_name,
@@ -129,6 +139,7 @@ def main():
         packages = [ package_name ],
         namespace_packages = namespace_packages,
         zip_safe = False,
+        install_requires = requires,
         )
 
     dotdir = join(base, '.pyron')
@@ -144,7 +155,7 @@ def main():
     if not namespace_stack.check():
         namespace_stack.build()
 
-    python = os.path.join('bin', 'python')
+    python = join('bin', 'python')
 
     f = open(join(dotdir, 'setup.py'), 'w')
     f.write('import setuptools\nsetuptools.setup(**\n%s\n)\n'
