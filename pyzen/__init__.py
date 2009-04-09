@@ -12,7 +12,7 @@ package should be compatible with everything else in Python.
 __version__ = '0.1'
 __testrunner__ = 'nose'
 
-import _ast, os.path, subprocess, sys
+import _ast, os.path, shutil, subprocess, sys
 from pprint import pformat
 
 def die(message):
@@ -44,9 +44,9 @@ class NamespaceStack(object):
         self.base = base
         n = len(package_names)
         levels = range(1, n)
-        self.dirs = [ join(*package_names[:i]) for i in levels ]
+        self.dirs = [ join(*[base] + package_names[:i]) for i in levels ]
         self.inits = [ join(d, '__init__.py') for d in self.dirs ]
-        self.symlink = join(*package_names)
+        self.symlink = join(*[base] + package_names)
         self.linkdest = join(*['..'] * n)
 
     def check(self):
@@ -111,11 +111,11 @@ def parse(init_path):
     return docstring, values
 
 def main():
-    base = ''#os.getcwd() # TODO: allow command line to specify
+    base = '.' # TODO: allow command line to specify
     init_path = os.path.join(base, '__init__.py')
     docstring, values = parse(init_path)
 
-    first_line = docstring.strip().split('\n')[0].strip()
+    first_line, other_lines = docstring.strip().split('\n', 1).strip()
     if not first_line:
         die('Error: first line of docstring is blank in %s' % (init_path))
     pieces = first_line.split(':', 1)
@@ -130,17 +130,17 @@ def main():
     setup_args = dict(
         name = package_name,
         description = description,
+        #long_description = 'foof',
+        version = values['__version__'],
         packages = [ package_name ],
         namespace_packages = namespace_packages,
         zip_safe = False,
         )
 
-    dotdir = os.path.join(base, '.pyzen')
+    dotdir = join(base, '.pyzen')
 
     if not os.path.exists(dotdir):
         os.system('virtualenv ' + dotdir)
-
-    os.chdir(dotdir)
 
     # Next, create a tree of parent namespace packages.  If already
     # present, then verify that it is correct; if verification fails,
@@ -150,19 +150,24 @@ def main():
     if not namespace_stack.check():
         namespace_stack.build()
 
-    python = os.path.join('', 'bin', 'python')
-    #sys.argv[1:] = [
-    #    #'clean', '--build-base', '.pyzen',
-    #    'install', '--build-base', '.pyzen',
-    #    ]
-    f = open('setup.py', 'w')
+    python = os.path.join('bin', 'python')
+
+    f = open(join(dotdir, 'setup.py'), 'w')
     f.write('import setuptools\nsetuptools.setup(**\n%s\n)\n'
             % pformat(setup_args))
     f.close()
 
-    subprocess.check_call([ python, 'setup.py', '-q', 'clean', 'develop' ])
+    print python
+    subprocess.check_call([ python, 'setup.py', '-q', 'clean', 'develop' ],
+                          cwd=dotdir)
 
     if len(sys.argv) > 1 and sys.argv[1] == 'python':
         os.execvp(python, [ python ] + sys.argv[2:])
     elif len(sys.argv) > 1 and sys.argv[1] == 'test':
         os.execvp(python, [ python ] + sys.argv[2:])
+    elif len(sys.argv) > 1 and sys.argv[1] in ['sdist', 'bdist_egg']:
+        subprocess.check_call([
+                python, 'setup.py', '-q', sys.argv[1],
+                ], cwd=dotdir)
+        for name in os.listdir(join(dotdir, 'dist')):
+            shutil.move(join(dotdir, 'dist', name), base)
