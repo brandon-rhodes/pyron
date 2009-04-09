@@ -121,7 +121,7 @@ def inspect_readme(path, info):
         if (match and underline == underline[0] * len(underline)):
             package_name, description = match.groups()
             if all(package_name.split(u'.')):
-                body = u'\n'.join(lines[i+2:]).lstrip(u'\n')
+                body = u''.join(lines[i+2:]).lstrip(u'\n')
                 return body, package_name, description
 
     die('the beginning of your %s must look like'
@@ -217,6 +217,10 @@ def main():
         os.execvp(python, [ python ] + sys.argv[2:])
     elif len(sys.argv) > 1 and sys.argv[1] == 'test':
         os.execvp(python, [ python ] + sys.argv[2:])
+    elif len(sys.argv) > 1 and sys.argv[1] in ['register']:
+        subprocess.check_call([
+                python, 'setup.py', '-q', sys.argv[1],
+                ], cwd=dotdir)
     elif len(sys.argv) > 1 and sys.argv[1] in ['sdist', 'bdist_egg']:
         subprocess.check_call([
                 python, 'setup.py', '-q', sys.argv[1],

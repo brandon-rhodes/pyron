@@ -27,8 +27,9 @@ typical ``setup.py`` file:
         ``my.package`` -- Does exactly the things I need
         ------------------------------------------------
 
-        There is, of course, no point in having a Python package
-        around, taking up disk space, unless it does just what...
+        There is, of course, no point in having a Python
+        package around, taking up disk space, unless it
+        does exactly what I want...
 
     Your package's name is assumed to be the string inside of the double
     back-quotes in your ``README.txt`` title.  It can have as many dots
