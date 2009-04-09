@@ -115,7 +115,7 @@ def main():
     init_path = os.path.join(base, '__init__.py')
     docstring, values = parse(init_path)
 
-    first_line, other_lines = docstring.strip().split('\n', 1).strip()
+    first_line = docstring.strip().split('\n', 1)[0].strip()
     if not first_line:
         die('Error: first line of docstring is blank in %s' % (init_path))
     pieces = first_line.split(':', 1)
@@ -157,7 +157,6 @@ def main():
             % pformat(setup_args))
     f.close()
 
-    print python
     subprocess.check_call([ python, 'setup.py', '-q', 'clean', 'develop' ],
                           cwd=dotdir)
 
