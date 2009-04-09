@@ -6,11 +6,15 @@ This package contains the source code to support the ``pyron`` Python
 command-line tool for building and installing packages.
 
 """
+from __future__ import absolute_import
+
 __version__ = '0.1'
 __testrunner__ = 'nose'
 
-import _ast, os.path, re, shutil, subprocess, sys
+import _ast, os.path, shutil, subprocess, sys
 from pprint import pformat
+
+from .readme import find_readme, inspect_readme
 
 def die(message):
     sys.stderr.write('pyron: ' + message + '\n')
@@ -80,68 +84,14 @@ class NamespaceStack(object):
             writeout(i, NAMESPACE_INIT) 
         os.symlink(self.linkdest, self.symlink)
 
-README_NAMES = ('README', 'README.txt')
-
-def find_readme(directory):
-    """Find under which name a project keeps its README file."""
-    candidates = [ join(directory, name) for name in README_NAMES ]
-    candidates = filter(os.path.isfile, candidates)
-    if not candidates:
-        die('your project must include either %s'
-            % ' or '.join(README_NAMES))
-    if len(candidates) > 1:
-        die('your project cannot supply both %s'
-            % ' and '.join(candidates))
-    return candidates[0]
-
-title_match = re.compile(ur'``([A-Za-z_.]+)``\W+(.*)').match
-
-def inspect_readme(path, info):
-    """Look in a README file for a package name and description."""
-    try:
-        f = open(path, 'U')
-        lines = f.readlines()
-        f.close()
-    except IOError, e:
-        die('cannot read your %s file: %s' % (path, e.strerror))
-
-    try:
-        for i in range(len(lines)):
-            lines[i] = lines[i].decode('utf-8')
-    except IOError: # placeholder until I test this error
-        raise
-
-    i = 0
-    while i < len(lines) and not lines[i].strip():
-        i += 1 # skip blank lines
-    if i + 1 < len(lines):
-        title = lines[i].strip()
-        underline = lines[i+1].strip()
-        match = title_match(title)
-        if (match and underline == underline[0] * len(underline)):
-            package_name, description = match.groups()
-            if all(package_name.split(u'.')):
-                body = u''.join(lines[i+2:]).lstrip(u'\n')
-                return body, package_name, description
-
-    die('the beginning of your %s must look like'
-        ' (with your choice of punctuation):\n\n'
-        '``package`` -- description\n'
-        '==========================\n' % path)
-
 def parse(init_path):
+    """Parse a package-wide __init__.py module for information."""
     f = open(init_path)
     code = f.read()
     f.close()
 
     a = compile(code, init_path, 'exec', _ast.PyCF_ONLY_AST)
 
-    if (not a.body or
-        not isinstance(a.body[0], _ast.Expr) or
-        not isinstance(a.body[0].value, _ast.Str)):
-        die('your module has no docstring')
-
-    docstring = a.body[0].value.s
     values = {}
 
     for a2 in a.body:
@@ -154,19 +104,18 @@ def parse(init_path):
         if name not in values:
             die('your module does not define %r at the top level' % name)
 
-    return docstring, values
+    return values
 
 def main():
     base = '.' # TODO: allow command line to specify
-    info = {} # will be filled in as we process files
 
     # Determine whether the two that we require are present.
 
     readme_path = find_readme(base)
-    body, package_name, description = inspect_readme(readme_path, info)
+    package_name, description, body = inspect_readme(readme_path)
 
     init_path = os.path.join(base, '__init__.py')
-    docstring, values = parse(init_path)
+    values = parse(init_path)
 
     package_names = package_name.split('.')
     namespace_packages = [ '.'.join(package_names[:i])
@@ -174,21 +123,13 @@ def main():
 
     setup_args = dict(
         name = package_name,
+        description = description,
+        long_description = body,
         version = values['__version__'],
         packages = [ package_name ],
         namespace_packages = namespace_packages,
         zip_safe = False,
         )
-
-    try:
-        setup_args['description'] = description.encode('ascii'),
-    except UnicodeEncodeError:
-        die('your README title must consist of only ASCII characters')
-
-    try:
-        setup_args['long_description'] = body.encode('ascii')
-    except UnicodeEncodeError:
-        die('your README body must consist of only ASCII characters ')
 
     dotdir = join(base, '.pyron')
 
