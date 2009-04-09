@@ -3,7 +3,8 @@
 ===========================================
 
 NOTE: the ``pyron`` command is still under development, and, in
-particular, does not yet support projects with dependencies.
+particular, does not yet support projects with dependencies.  So, it
+should probably be used only by its developers at this point.
 
 The ``pyron`` command is designed to eliminate the vast reptition that
 characterizes the ``setup.py`` file of typical Python packages.  Instead
@@ -90,10 +91,10 @@ look like::
     web.utils.url-1.4-py2.5.egg
     web.utils.url-1.4.tar.gz
     $ pyron python
-    >>>> import web.utils.url
-    >>>> web.utils.url.__version__
+    >>> import web.utils.url
+    >>> web.utils.url.__version__
     '0.4'
-    >>>> ^D
+    >>> ^D
 
 If you peek under the hood, you will see that ``pyron`` does its work in
 a hidden directory under your project directory named ``.pyron``, where
