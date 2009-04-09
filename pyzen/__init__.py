@@ -12,12 +12,11 @@ package should be compatible with everything else in Python.
 __version__ = '0.1'
 __testrunner__ = 'nose'
 
-import os.path, parser, sys
+import _ast, os.path, subprocess, sys
 from pprint import pformat
-from pyzen.parse import get_docstring
 
 def die(message):
-    sys.stderr.write(message + '\n')
+    sys.stderr.write('Error: ' + message + '\n')
     sys.exit(1)
 
 NAMESPACE_INIT = ("import pkg_resources\n"
@@ -84,18 +83,38 @@ class NamespaceStack(object):
             writeout(i, NAMESPACE_INIT) 
         os.symlink(self.linkdest, self.symlink)
 
+def parse(init_path):
+    f = open(init_path)
+    code = f.read()
+    f.close()
+
+    a = compile(code, init_path, 'exec', _ast.PyCF_ONLY_AST)
+
+    if (not a.body or
+        not isinstance(a.body[0], _ast.Expr) or
+        not isinstance(a.body[0].value, _ast.Str)):
+        die('your module has no docstring')
+
+    docstring = a.body[0].value.s
+    values = {}
+
+    for a2 in a.body:
+        if isinstance(a2, _ast.Assign) and isinstance(a2.value, _ast.Str):
+            for target in a2.targets:
+                if isinstance(target, _ast.Name):
+                    values[target.id] = a2.value.s
+
+    for name in '__version__', '__testrunner__':
+        if name not in values:
+            die('your module does not define %r at the top level' % name)
+
+    return docstring, values
+
 def main():
-    base = os.getcwd() # TODO: allow command line to specify
+    base = ''#os.getcwd() # TODO: allow command line to specify
     init_path = os.path.join(base, '__init__.py')
-    init = open(init_path).read()
-    suite = parser.suite(init)
-    code = suite.compile()
-    tup = suite.totuple()
-    successful, results = get_docstring(tup)
-    if not successful:
-        die('Error: no module docstring in %s' % (init_path))
-    docstring_expr = results['docstring']
-    docstring = eval(docstring_expr) # since it has quotes around it
+    docstring, values = parse(init_path)
+
     first_line = docstring.strip().split('\n')[0].strip()
     if not first_line:
         die('Error: first line of docstring is blank in %s' % (init_path))
@@ -131,7 +150,7 @@ def main():
     if not namespace_stack.check():
         namespace_stack.build()
 
-    python = os.path.join(base, '.pyzen', 'bin', 'python')
+    python = os.path.join('', 'bin', 'python')
     #sys.argv[1:] = [
     #    #'clean', '--build-base', '.pyzen',
     #    'install', '--build-base', '.pyzen',
@@ -140,6 +159,10 @@ def main():
     f.write('import setuptools\nsetuptools.setup(**\n%s\n)\n'
             % pformat(setup_args))
     f.close()
-    #os.execl(python, python, 'setup.py', '-q', 'clean', 'develop')
+
+    subprocess.check_call([ python, 'setup.py', '-q', 'clean', 'develop' ])
+
     if len(sys.argv) > 1 and sys.argv[1] == 'python':
+        os.execvp(python, [ python ] + sys.argv[2:])
+    elif len(sys.argv) > 1 and sys.argv[1] == 'test':
         os.execvp(python, [ python ] + sys.argv[2:])
