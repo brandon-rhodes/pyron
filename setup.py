@@ -1,9 +1,9 @@
-# Ironically, this first version of pyzen of course needs a setup.py.
-# This will be removed once pyzen is capable enough to introspect itself.
+# Ironically, this first version of pyron of course needs a setup.py.
+# This will be removed once pyron is capable enough to introspect itself.
 
 from setuptools import setup
 
-setup(name = 'pyzen',
+setup(name = 'pyron',
       version = '0.1',
       description = 'The DRY Python package tool',
       license = 'GPL',
@@ -11,8 +11,8 @@ setup(name = 'pyzen',
       author_email = 'brandon@rhodesmill.org',
       classifiers = [
         ],
-      packages = [ 'pyzen' ],
+      packages = [ 'pyron' ],
       entry_points = {
-        'console_scripts': [ 'pyzen = pyzen:main', ],
+        'console_scripts': [ 'pyron = pyron:main', ],
         }
       )
