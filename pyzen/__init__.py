@@ -13,6 +13,7 @@ __version__ = '0.1'
 __testrunner__ = 'nose'
 
 import os.path, parser, sys
+from pprint import pformat
 from pyzen.parse import get_docstring
 
 def die(message):
@@ -114,8 +115,6 @@ def main():
         namespace_packages = namespace_packages,
         zip_safe = False,
         )
-    import pprint
-    pprint.pprint(setup_args)
 
     dotdir = os.path.join(base, '.pyzen')
 
@@ -133,16 +132,14 @@ def main():
         namespace_stack.build()
 
     python = os.path.join(base, '.pyzen', 'bin', 'python')
-    old_args = sys.argv[1:]
     #sys.argv[1:] = [
     #    #'clean', '--build-base', '.pyzen',
     #    'install', '--build-base', '.pyzen',
     #    ]
     f = open('setup.py', 'w')
-    f.write('import setuptools; setuptools.setup(**%r)\n' % setup_args)
+    f.write('import setuptools\nsetuptools.setup(**\n%s\n)\n'
+            % pformat(setup_args))
     f.close()
-    os.execl(python, python, 'setup.py', '-q',
-             'clean', 'develop')
-    if old_args and old_args[0] == 'python':
-        print "go!"
-        os.execvp(python, python, old_args[1:])
+    #os.execl(python, python, 'setup.py', '-q', 'clean', 'develop')
+    if len(sys.argv) > 1 and sys.argv[1] == 'python':
+        os.execvp(python, [ python ] + sys.argv[2:])
