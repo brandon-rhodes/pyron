@@ -105,6 +105,12 @@ def inspect_readme(path, info):
     except IOError, e:
         die('cannot read your %s file: %s' % (path, e.strerror))
 
+    try:
+        for i in range(len(lines)):
+            lines[i] = lines[i].decode('utf-8')
+    except IOError: # placeholder until I test this error
+        raise
+
     i = 0
     while i < len(lines) and not lines[i].strip():
         i += 1 # skip blank lines
@@ -115,7 +121,7 @@ def inspect_readme(path, info):
         if (match and underline == underline[0] * len(underline)):
             package_name, description = match.groups()
             if all(package_name.split(u'.')):
-                body = u'\n'.join(lines[i+2:]).lstrip('\n')
+                body = u'\n'.join(lines[i+2:]).lstrip(u'\n')
                 return body, package_name, description
 
     die('the beginning of your %s must look like'
@@ -168,13 +174,21 @@ def main():
 
     setup_args = dict(
         name = package_name,
-        description = description,
-        long_description = body,
         version = values['__version__'],
         packages = [ package_name ],
         namespace_packages = namespace_packages,
         zip_safe = False,
         )
+
+    try:
+        setup_args['description'] = description.encode('ascii'),
+    except UnicodeEncodeError:
+        die('your README title must consist of only ASCII characters')
+
+    try:
+        setup_args['long_description'] = body.encode('ascii')
+    except UnicodeEncodeError:
+        die('your README body must consist of only ASCII characters ')
 
     dotdir = join(base, '.pyron')
 

@@ -64,8 +64,8 @@ typical ``setup.py`` file:
     of your package's ``__init__.py`` file.
 
 As long as you make this information available using the above
-techniques — which are merely a codification of already existing Python
-best practices — then ``pyron`` will build both your ``setup.py`` and
+techniques, which are merely a codification of already existing Python
+best practices, then ``pyron`` will build both your ``setup.py`` and
 your project for you without requiring any further intervention.
 
 Using the ``pyron`` command
