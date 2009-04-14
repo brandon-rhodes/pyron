@@ -114,13 +114,6 @@ def main():
         install_requires = requires,
         )
 
-    facts = scan_package(base)
-
-    if 'console_scripts' in facts:
-        setup_args['entry_points'] = {
-            'console_scripts': facts['console_scripts'],
-            }
-
     dotdir = join(base, '.pyron')
 
     if not os.path.exists(dotdir):
@@ -133,6 +126,18 @@ def main():
     namespace_stack = NamespaceStack(dotdir, package_names)
     if not namespace_stack.check():
         namespace_stack.build()
+
+    # Now that the namespace stack exists, we can introspect the
+    # contents of this package like a real module.
+
+    facts = scan_package(package_name, base, dotdir)
+
+    if 'console_scripts' in facts and facts['console_scripts']:
+        setup_args['entry_points'] = {
+            'console_scripts': facts['console_scripts'],
+            }
+
+    #
 
     python = join(dotdir, 'bin', 'python')
     setup_py = join(dotdir, 'setup.py')
