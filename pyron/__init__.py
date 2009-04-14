@@ -16,6 +16,7 @@ from pprint import pformat
 
 from .readme import find_readme, inspect_readme
 from .namespaces import NamespaceStack
+from .scan import scan_package
 
 def die(message):
     sys.stderr.write('pyron: ' + message + '\n')
@@ -98,6 +99,8 @@ def main():
     else:
         requires = []
 
+    facts = {}
+
     setup_args = dict(
         name = package_name,
         version = values['__version__'],
@@ -110,6 +113,13 @@ def main():
         zip_safe = False,
         install_requires = requires,
         )
+
+    facts = scan_package(base)
+
+    if 'console_scripts' in facts:
+        setup_args['entry_points'] = {
+            'console_scripts': facts['console_scripts'],
+            }
 
     dotdir = join(base, '.pyron')
 
