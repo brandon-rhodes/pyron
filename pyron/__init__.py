@@ -11,7 +11,7 @@ from __future__ import absolute_import
 __version__ = '0.1'
 __testrunner__ = 'nose'
 
-import _ast, os.path, shutil, subprocess, sys
+import _ast, email.utils, os.path, shutil, subprocess, sys
 from pprint import pformat
 
 from .readme import find_readme, inspect_readme
@@ -128,7 +128,7 @@ def parse(init_path):
             for target, value in zip(targets, values):
                 global_constants[target.id] = value
 
-    for name in '__version__', '__testrunner__':
+    for name in '__version__', '__testrunner__', '__author__':
         if name not in global_constants:
             die('your module does not define %r at the top level' % name)
 
@@ -143,6 +143,12 @@ def main():
     init_path = join(base, '__init__.py')
     values = parse(init_path)
 
+    __author__ = values['__author__']
+    author, author_email = email.utils.parseaddr(__author__)
+    if not author:
+        die('the __author__ defined in your __init__.py must include both'
+            ' a name and an email address, like "Ed <ed@example.com>"')
+
     package_names = package_name.split('.')
     namespace_packages = [ '.'.join(package_names[:i])
                            for i in range(1, len(package_names)) ]
@@ -155,9 +161,11 @@ def main():
 
     setup_args = dict(
         name = package_name,
+        version = values['__version__'],
         description = description,
         long_description = body,
-        version = values['__version__'],
+        author = author,
+        author_email = author_email,
         packages = [ package_name ],
         namespace_packages = namespace_packages,
         zip_safe = False,
@@ -177,14 +185,16 @@ def main():
     if not namespace_stack.check():
         namespace_stack.build()
 
-    python = join('bin', 'python')
+    python = join(dotdir, 'bin', 'python')
+    setup_py = join(dotdir, 'setup.py')
 
-    f = open(join(dotdir, 'setup.py'), 'w')
+    f = open(setup_py, 'w')
     f.write('import setuptools\nsetuptools.setup(**\n%s\n)\n'
             % pformat(setup_args))
     f.close()
 
-    subprocess.check_call([ python, 'setup.py', '-q', 'clean', 'develop' ],
+    subprocess.check_call([ join('bin', 'python'), 'setup.py',
+                            '-q', 'clean', 'develop' ],
                           cwd=dotdir)
 
     if len(sys.argv) > 1 and sys.argv[1] == 'python':
@@ -193,11 +203,11 @@ def main():
         os.execvp(python, [ python ] + sys.argv[2:])
     elif len(sys.argv) > 1 and sys.argv[1] in ['register']:
         subprocess.check_call([
-                python, 'setup.py', '-q', sys.argv[1],
+                join('bin', 'python'), 'setup.py', '-q', sys.argv[1],
                 ], cwd=dotdir)
     elif len(sys.argv) > 1 and sys.argv[1] in ['sdist', 'bdist_egg']:
         subprocess.check_call([
-                python, 'setup.py', '-q', sys.argv[1],
+                join('bin', 'python'), 'setup.py', '-q', sys.argv[1],
                 ], cwd=dotdir)
         for name in os.listdir(join(dotdir, 'dist')):
             shutil.move(join(dotdir, 'dist', name), base)
