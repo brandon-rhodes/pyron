@@ -153,6 +153,9 @@ def main():
 
     if len(sys.argv) > 1 and sys.argv[1] == 'python':
         os.execvp(python, [ python ] + sys.argv[2:])
+    elif len(sys.argv) > 1 and sys.argv[1] == 'run':
+        cmd = join(dotdir, 'bin', sys.argv[2])
+        os.execvp(cmd, [ cmd ] + sys.argv[3:])
     elif len(sys.argv) > 1 and sys.argv[1] == 'test':
         os.execvp(python, [ python ] + sys.argv[2:])
     elif len(sys.argv) > 1 and sys.argv[1] in ['register']:
