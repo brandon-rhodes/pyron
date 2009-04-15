@@ -32,7 +32,7 @@ def inspect_readme(path):
                            % (path, e.strerror))
 
     try:
-        readme = readme.decode('ascii')
+        readme = readme.encode('ascii')
     except UnicodeDecodeError:
         raise RuntimeError(
             'because of the limitations of setuptools and the Python'
@@ -70,7 +70,7 @@ def inspect_readme(path):
     match = TITLE_MATCH(title)
     if (match and underline == underline[0] * len(underline)):
         package_name, description = match.groups()
-        if all(package_name.split(u'.')):
+        if all(package_name.split('.')):
             return package_name, description, body
 
     raise format_error
