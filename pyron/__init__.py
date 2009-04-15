@@ -108,7 +108,7 @@ def main():
         long_description = body,
         author = author,
         author_email = author_email,
-        packages = [ package_name ],
+        packages = [ package_name ] + namespace_packages,
         namespace_packages = namespace_packages,
         zip_safe = False,
         install_requires = requires,
