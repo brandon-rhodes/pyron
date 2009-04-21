@@ -14,6 +14,7 @@ __author__ = 'Brandon Craig Rhodes <brandon@rhodesmill.org>'
 __url__ = 'http://bitbucket.org/brandon/pyron/'
 
 import email.utils, os.path, shutil, subprocess, sys
+from optparse import OptionParser
 from pprint import pformat
 
 from .introspect import parse_project_init
@@ -27,7 +28,27 @@ def die(message):
 
 join = os.path.join
 
+usage = """\
+usage: %prog build     - build the project in the current directory
+       %prog python    - run an interpreter with this project in its PATH
+       %prog run <cmd> - run one of your project console entry-points
+       %prog register  - upload project metadata to PyPI
+       %prog sdist     - generate a .tar.gz ready for distribution
+       %prog bdist_egg - generate a binary egg for distribution"""
+
+cmds = ['build', 'python', 'run', 'register', 'sdist', 'bdist_egg']
+
 def main():
+    parser = OptionParser(usage)
+    (options, args) = parser.parse_args()
+
+    if not args or args[0] not in cmds:
+        parser.print_help()
+        sys.exit(1)
+
+    cmd = args[0]
+    del args[0]
+
     base = '.' # TODO: allow command line to specify
 
     readme_path = find_readme(base)
@@ -109,18 +130,20 @@ def main():
                             '-q', 'clean', 'develop' ],
                           cwd=dotdir)
 
-    if len(sys.argv) > 1 and sys.argv[1] == 'python':
+    if cmd == 'build':
+        pass # work has already been done, above
+    elif cmd == 'python':
         os.execvp(python, [ python ] + sys.argv[2:])
-    elif len(sys.argv) > 1 and sys.argv[1] == 'run':
+    elif cmd == 'run':
         cmd = join(dotdir, 'bin', sys.argv[2])
         os.execvp(cmd, [ cmd ] + sys.argv[3:])
-    #elif len(sys.argv) > 1 and sys.argv[1] == 'test':
+    #elif cmd == 'test':
     #    os.execvp(python, [ python ] + sys.argv[2:])
-    elif len(sys.argv) > 1 and sys.argv[1] in ['register']:
+    elif cmd == 'register':
         subprocess.check_call([
                 join('bin', 'python'), 'setup.py', '-q', sys.argv[1],
                 ], cwd=dotdir)
-    elif len(sys.argv) > 1 and sys.argv[1] in ['sdist', 'bdist_egg']:
+    elif cmd in ['sdist', 'bdist_egg']:
         subprocess.check_call([
                 join('bin', 'python'), 'setup.py', '-q', sys.argv[1],
                 ], cwd=dotdir)
