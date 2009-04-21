@@ -10,9 +10,14 @@ And thanks to the fact that ``pyron`` uses the ``distutils`` for source
 distributions and the ``setuptools`` for building eggs, the results
 should be compatible with everything else in Python.
 
-The ``pyron`` command is **still under early development**, so it should
-probably be used only by its developers at this point.  This version is
-present on PyPI as a bootstrapping measure.
+The ``pyron`` command is **still under early development**, so it is
+**not yet available as a package on PyPI**.  If you want to try it out,
+fetch it from its development home on bitbucket::
+
+ $ hg clone https://brandon@bitbucket.org/brandon/pyron/
+ $ virtualenv v
+ $ v/bin/python setup.py install
+ $ v/bin/pyron --help
 
 To use ``pyron``, your project needs to consist of a directory with at
 least a ``README.txt`` and an ``__init__.py`` sitting next to each other
