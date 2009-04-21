@@ -67,9 +67,9 @@ class NamespaceStack(object):
 
         base = self.dirs[0] if self.dirs else self.symlink
         if os.path.exists(base):
-            die("PLEASE REMOVE " + base)
-            # when I feel more confident, the above will become:
-            shutil.rmtree(base)
+            die("Please remove (with rm -r): " + base)
+            # when I feel more confident, the above line will become:
+            # shutil.rmtree(base)
         for d in self.dirs:
             os.mkdir(d) 
         for i in self.inits:

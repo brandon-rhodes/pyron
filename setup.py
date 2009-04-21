@@ -9,6 +9,7 @@ setup(name = 'pyron',
       license = 'GPL',
       author = 'Brandon Craig Rhodes',
       author_email = 'brandon@rhodesmill.org',
+      url = 'http://bitbucket.org/brandon/pyron/',
       classifiers = [
         'Development Status :: 4 - Beta',
         'Environment :: Console',

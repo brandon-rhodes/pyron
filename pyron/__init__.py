@@ -10,6 +10,8 @@ from __future__ import absolute_import
 
 __version__ = '0.1'
 __testrunner__ = 'nose'
+__author__ = 'Brandon Craig Rhodes <brandon@rhodesmill.org>'
+__url__ = 'http://bitbucket.org/brandon/pyron/'
 
 import _ast, email.utils, os.path, shutil, subprocess, sys
 from pprint import pformat
@@ -68,7 +70,7 @@ def parse(init_path):
             for target, value in zip(targets, values):
                 global_constants[target.id] = value
 
-    for name in '__version__', '__testrunner__', '__author__':
+    for name in '__version__', '__author__': # '__testrunner__'
         if name not in global_constants:
             die('your module does not define %r at the top level' % name)
 
@@ -114,6 +116,11 @@ def main():
         install_requires = requires,
         )
 
+    if '__url__' in values:
+        setup_args['url'] = values['__url__']
+
+    #
+
     dotdir = join(base, '.pyron')
 
     if not os.path.exists(dotdir):
@@ -156,8 +163,8 @@ def main():
     elif len(sys.argv) > 1 and sys.argv[1] == 'run':
         cmd = join(dotdir, 'bin', sys.argv[2])
         os.execvp(cmd, [ cmd ] + sys.argv[3:])
-    elif len(sys.argv) > 1 and sys.argv[1] == 'test':
-        os.execvp(python, [ python ] + sys.argv[2:])
+    #elif len(sys.argv) > 1 and sys.argv[1] == 'test':
+    #    os.execvp(python, [ python ] + sys.argv[2:])
     elif len(sys.argv) > 1 and sys.argv[1] in ['register']:
         subprocess.check_call([
                 join('bin', 'python'), 'setup.py', '-q', sys.argv[1],

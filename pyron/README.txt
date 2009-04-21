@@ -2,10 +2,6 @@
 ``pyron`` -- The DRY Python package builder
 ===========================================
 
-NOTE: the ``pyron`` command is still under development, and, in
-particular, does not yet support projects with dependencies.  So, it
-should probably be used only by its developers at this point.
-
 The ``pyron`` command is designed to eliminate the vast reptition that
 characterizes the ``setup.py`` file of typical Python packages.  Instead
 of needing a setup file, ``pyron`` simply inspects your package to
@@ -14,10 +10,14 @@ And thanks to the fact that ``pyron`` uses the ``distutils`` for source
 distributions and the ``setuptools`` for building eggs, the results
 should be compatible with everything else in Python.
 
-Your project, at minimum, needs to consist of a directory with a
-``README.txt`` and an ``__init__.py`` sitting next to each other inside
-of it.  Here is where ``pyron`` looks for the information found in a
-typical ``setup.py`` file:
+The ``pyron`` command is **still under early development**, so it should
+probably be used only by its developers at this point.  This version is
+present on PyPI as a bootstrapping measure.
+
+To use ``pyron``, your project needs to consist of a directory with at
+least a ``README.txt`` and an ``__init__.py`` sitting next to each other
+inside of it.  Here is where ``pyron`` looks for the information found
+in a typical ``setup.py`` file:
 
 **packages**
 
@@ -59,10 +59,11 @@ typical ``setup.py`` file:
     named ``web.utils.url``, then ``web`` and ``web.utils`` will both be
     made namespace packages.
 
-**version**
+**version**, **author**, **url**
 
-    The project version is taken from the ``__version__`` symbol inside
-    of your package's ``__init__.py`` file.
+    These project attributes are taken from the symbols ``__version__``,
+    ``__author__``, and ``__url__`` inside of your package's
+    ``__init__.py`` file.
 
 As long as you make this information available using the above
 techniques, which are merely a codification of already existing Python
