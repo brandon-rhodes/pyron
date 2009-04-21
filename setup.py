@@ -10,6 +10,12 @@ setup(name = 'pyron',
       author = 'Brandon Craig Rhodes',
       author_email = 'brandon@rhodesmill.org',
       classifiers = [
+        'Development Status :: 4 - Beta',
+        'Environment :: Console',
+        'Intended Audience :: Developers',
+        'License :: OSI Approved :: GNU General Public License (GPL)',
+        'Programming Language :: Python',
+        'Topic :: Software Development :: Build Tools',
         ],
       packages = [ 'pyron' ],
       entry_points = {
