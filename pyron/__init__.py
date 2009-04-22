@@ -158,7 +158,7 @@ def main():
                 ], cwd=dotdir)
     elif cmd in ['sdist', 'bdist_egg']:
         subprocess.check_call([
-                join('bin', 'python'), 'setup.py', '-q', sys.argv[1],
-                ], cwd=dotdir)
+                join('bin', 'python'), 'setup.py', '-q'] + sys.argv[1:],
+                              cwd=dotdir)
         for name in os.listdir(join(dotdir, 'dist')):
             shutil.move(join(dotdir, 'dist', name), base)
