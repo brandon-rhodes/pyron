@@ -10,16 +10,38 @@ And thanks to the fact that ``pyron`` uses the ``distutils`` for source
 distributions and the ``setuptools`` for building eggs, the results
 should be compatible with everything else in Python.
 
-The ``pyron`` command is **still under early development**, so it is
-**not yet available as a package on PyPI**.  If you want to try it out,
-fetch it from its development home on bitbucket::
+Pyron is **still under early development**, so it is **not yet available
+as a package on PyPI**.  You should probably just be looking over the
+documentation at this point and letting Brandon know whether this looks
+like a good idea, or whether this kind of approach to package building
+deeply worries you.
+
+If you want to try Pyron out, fetch it from its development home on
+bitbucket::
 
  $ hg clone https://bitbucket.org/brandon/pyron/
  $ virtualenv v
  $ v/bin/python setup.py develop
  $ v/bin/pyron --help
 
-To use ``pyron``, your project needs to consist of a directory with at
+The secrets of how Pyron works
+------------------------------
+
+Pyron is currently a wrapper around ``virtualenv`` and the
+``setuptools``.  It creates a virtual environment named ``.pyron``,
+creates a ``setup.py`` there based on what it discovers by introspecting
+your package, and then actually *changes directory* to the location of
+``setup.py`` before running it to prevent the distribution utilities
+from exploding!  You can always look under this hidden directory to see
+what Pyron is doing if its behavior baffles you.  Note that the
+``setup.py`` is rebuilt fresh each time it runs; unlike the
+``setuptools``, Pyron will *not* get confused because it remembers
+things about how your project was configured ten minutes ago!
+
+What your Pyron-powered project has to look like
+------------------------------------------------
+
+To use Pyron, your project needs to consist of a directory with at
 least a ``README.txt`` and an ``__init__.py`` sitting next to each other
 inside of it.  Here is where ``pyron`` looks for the information found
 in a typical ``setup.py`` file:
@@ -34,22 +56,23 @@ in a typical ``setup.py`` file:
 
         There is, of course, no point in having a Python
         package around, taking up disk space, unless it
-        does exactly what I want...
+        does exactly what I need...
 
     Your package's name is assumed to be the string inside of the double
-    back-quotes in your ``README.txt`` title.  It can have as many dots
-    in it as you like; all of the packages except the last will be
-    assumed to be namespace packages, and built as such.
+    back-quotes in the main title of your ``README.txt`` title.  It can
+    have as many dots in it as you like; all of the packages except the
+    last will be assumed to be namespace packages, and built as such.
 
 **name**
 
     The source packages and eggs that you distribute will be given the
-    same name as your Python package, per Python best practices.
+    same name as your Python package, per best practices.
 
 **description**
 
-    This is the string that takes up the rest of the first line of your
-    ``README.txt`` file.
+    The short description of your project will be taken from the rest of
+    the first line of your ``README.txt`` file: everything after the
+    hyphen, dash, or colon that follows your project name.
 
 **long_description**
 
@@ -68,7 +91,11 @@ in a typical ``setup.py`` file:
 
     These project attributes are taken from the symbols ``__version__``,
     ``__author__``, and ``__url__`` inside of your package's
-    ``__init__.py`` file.
+    ``__init__.py`` file.  Note that ``__author__`` should be a
+    string that the Python ``email.utils.parseaddr()`` function will
+    recognize as being a name and email address, such as::
+
+        Brandon Craig Rhodes <brandon@rhodesmill.org>
 
 As long as you make this information available using the above
 techniques, which are merely a codification of already existing Python
@@ -88,6 +115,9 @@ look like::
     __init___.py
     rfc1738.py
     urlobj.py
+
+::
+
     $ pyron sdist
     $ pyron bdist_egg
     $ ls
@@ -97,11 +127,27 @@ look like::
     urlobj.py
     web.utils.url-1.4-py2.5.egg
     web.utils.url-1.4.tar.gz
+
+::
+
     $ pyron python
     >>> import web.utils.url
     >>> web.utils.url.__version__
     '0.4'
     >>> ^D
+
+::
+
+    # Where "mycmd" is a console entry point:
+
+    $ pyron run mycmd
+    usage: mycmd [--help] [args]
+
+::
+
+    $ pyron register
+    $ pyron sdist upload
+    $ pyron bdist_egg upload
 
 If you peek under the hood, you will see that ``pyron`` does its work in
 a hidden directory under your project directory named ``.pyron``, where
