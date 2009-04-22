@@ -83,6 +83,7 @@ def main():
         author = author,
         author_email = author_email,
         packages = [ package_name ] + namespace_packages,
+        #package_data = { package_name: ['README.txt'] },
         namespace_packages = namespace_packages,
         zip_safe = False,
         install_requires = requires,
@@ -97,6 +98,13 @@ def main():
 
     if not os.path.exists(dotdir):
         os.system('virtualenv ' + dotdir)
+
+    # Next, remove any pkg-info already present, since it will remember
+    # things from our last run and make our results unpredictable.
+
+    egg_info = join(dotdir, package_name + '.egg_info')
+    if os.path.exists(egg_info):
+        shutil.rmtree(egg_info)
 
     # Next, create a tree of parent namespace packages.  If already
     # present, then verify that it is correct; if verification fails,
