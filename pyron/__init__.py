@@ -102,7 +102,7 @@ def main():
     if cmd == 'build':
         pass # work has already been done, above
     elif cmd == 'egg':
-        egg_data = create_egg()
+        egg_data = create_egg(package_name)
         write_egg(package_name, values['__version__'],
                   sys.version_info, egg_data)
         #agtl-0.4.2-py2.6.egg

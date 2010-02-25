@@ -4,11 +4,30 @@ import pkg_resources
 from StringIO import StringIO
 from zipfile import ZipFile, ZipInfo
 
-def create_egg():
+def create_egg(package_name):
     f = StringIO()
     z = ZipFile(f, 'w')
     #z.writestr('EGG-INFO/PKG-INFO', 'foo')
-    z.writestr('EGG-INFO/not-zip-safe', '\n')  # enforce "best practices" :-)
+
+    # Look for periods in the package name to figure out if it is
+    # located inside of any namespace packages, and after reducing the
+    # name to its top-level component save that as metadata too.
+
+    parent = package_name
+    namespace_packages = ''
+    while '.' in parent:
+        parent = parent.rsplit('.', 1)[0]
+        namespace_packages += parent + '\n'
+    if namespace_packages:
+        z.writestr('EGG-INFO/namespace_packages.txt', namespace_packages)
+    z.writestr('EGG-INFO/top_level.txt', parent + '\n')
+
+    # Enforce best practices by refusing to write zip-safe eggs. :-)
+
+    z.writestr('EGG-INFO/not-zip-safe', '\n')
+
+    # Finish writing the zipfile data.
+
     z.close()
     return f.getvalue()
 
