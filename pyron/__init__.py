@@ -16,7 +16,7 @@ __url__ = 'http://bitbucket.org/brandon/pyron/'
 import email.utils, os.path, shutil, subprocess, sys
 from optparse import OptionParser
 
-from .eggs import create_egg
+from .eggs import create_egg, write_egg
 from .importer import PyronFinder, PyronLoader
 from .introspect import parse_project_init
 from .readme import find_readme, inspect_readme
@@ -102,10 +102,9 @@ def main():
     if cmd == 'build':
         pass # work has already been done, above
     elif cmd == 'egg':
-        filename = '{0}-{1}-py{2[0]}.{2[1]}.egg'.format(
-            package_name, values['__version__'], sys.version_info)
         egg_data = create_egg()
-        open(filename, 'w').write(egg_data)
+        write_egg(package_name, values['__version__'],
+                  sys.version_info, egg_data)
         #agtl-0.4.2-py2.6.egg
     elif cmd == 'python':
         os.execvp(python, [ python ] + sys.argv[2:])
