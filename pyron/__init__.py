@@ -16,6 +16,7 @@ __url__ = 'http://bitbucket.org/brandon/pyron/'
 import email.utils, os.path, shutil, subprocess, sys
 from optparse import OptionParser
 
+from .eggs import create_egg
 from .importer import PyronFinder, PyronLoader
 from .introspect import parse_project_init
 from .readme import find_readme, inspect_readme
@@ -35,7 +36,7 @@ usage: %prog build     - build the project in the current directory
        %prog sdist     - generate a .tar.gz ready for distribution
        %prog bdist_egg - generate a binary egg for distribution"""
 
-cmds = ['build', 'python', 'run', 'register', 'sdist', 'bdist_egg']
+cmds = ['build', 'egg', 'python', 'run', 'register', 'sdist', 'bdist_egg']
 
 def main():
     """The pyron command line."""
@@ -86,7 +87,7 @@ def main():
     if '__url__' in values:
         setup_args['url'] = values['__url__']
 
-    facts = scan_package(package_name, base, dotdir)
+    #facts = scan_package(package_name, base, dotdir)
 
     if 'console_scripts' in facts and facts['console_scripts']:
         setup_args['entry_points'] = {
@@ -100,6 +101,12 @@ def main():
 
     if cmd == 'build':
         pass # work has already been done, above
+    elif cmd == 'egg':
+        filename = '{0}-{1}-py{2[0]}.{2[1]}.egg'.format(
+            package_name, values['__version__'], sys.version_info)
+        egg_data = create_egg()
+        open(filename, 'w').write(egg_data)
+        #agtl-0.4.2-py2.6.egg
     elif cmd == 'python':
         os.execvp(python, [ python ] + sys.argv[2:])
     elif cmd == 'run':
