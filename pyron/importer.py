@@ -25,8 +25,9 @@ class PyronLoader(object):
 class PyronFinder(object):
     """PEP-302 compliant finder for packages being developed with Pyron."""
 
-    def __init__(self):
-        self.loaders = []
+    def __init__(self, loaders):
+        """The `loaders` should map package names to PyronLoader objects."""
+        self.loaders = loaders
 
     def find_module(self, fullname, path=None):
         """If we have a loader for this package, return it, else None."""
