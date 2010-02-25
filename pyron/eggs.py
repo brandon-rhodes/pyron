@@ -4,9 +4,16 @@ import os
 import pkg_resources
 from fnmatch import fnmatch
 from StringIO import StringIO
-from zipfile import ZipFile, ZipInfo
+from zipfile import ZipFile #, ZipInfo
 
 INCLUDE_PATTERNS = ('*.py', '*.rst', '*.txt')
+NAMESPACE_INIT = ('from pkgutil import extend_path\n'
+                  '__path__ = extend_path(__path__, __name__)\n')
+
+def append_namespaces(z, namespace_packages):
+    """Add namespace package __init__.py files to the zipfile."""
+    for name in sorted(namespace_packages):
+        z.writestr(name.replace('.', '/') + '/__init__.py', NAMESPACE_INIT)
 
 def append_files(z, dirpath, zipdir):
     """Append to the zipfile any files found in the given directory."""
@@ -40,12 +47,13 @@ def create_egg(package_name, dir_path):
     # name to its top-level component save that as metadata too.
 
     parent = package_name
-    namespace_packages = ''
+    namespace_packages = []
     while '.' in parent:
         parent = parent.rsplit('.', 1)[0]
-        namespace_packages += parent + '\n'
+        namespace_packages.append(parent)
     if namespace_packages:
-        z.writestr('EGG-INFO/namespace_packages.txt', namespace_packages)
+        z.writestr('EGG-INFO/namespace_packages.txt',
+                   ''.join(name + '\n' for name in namespace_packages))
     z.writestr('EGG-INFO/top_level.txt', parent + '\n')
 
     # Enforce best practices by refusing to write zip-safe eggs. :-)
@@ -54,6 +62,7 @@ def create_egg(package_name, dir_path):
 
     # Now that we are done with the metadata, save the actual data.
 
+    append_namespaces(z, namespace_packages)
     append_files(z, '.', package_name.replace('.', '/'))
 
     # Finish writing the zipfile data.
