@@ -114,9 +114,22 @@ def main():
     #elif cmd == 'test':
     #    os.execvp(python, [ python ] + sys.argv[2:])
     elif cmd == 'register':
-        subprocess.check_call([
-                join('bin', 'python'), 'setup.py', '-q', sys.argv[1],
-                ], cwd=dotdir)
+        from distutils.command.register import register
+        from distutils.dist import Distribution
+        dist = Distribution(dict(
+                name=package_name,
+                version=values['__version__'],
+                description=description,
+                long_description=body,
+                #license = 'GPL',
+                author=author,
+                author_email=author_email,
+                ))
+        cmd = register(dist)
+        cmd.run()
+        #subprocess.check_call([
+        #        join('bin', 'python'), 'setup.py', '-q', sys.argv[1],
+        #        ], cwd=dotdir)
     elif cmd in ['sdist', 'bdist_egg']:
         subprocess.check_call([
                 join('bin', 'python'), 'setup.py', '-q'] + sys.argv[1:],
