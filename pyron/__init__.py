@@ -14,6 +14,9 @@ __author__ = 'Brandon Craig Rhodes <brandon@rhodesmill.org>'
 __url__ = 'http://bitbucket.org/brandon/pyron/'
 
 import email.utils, os.path, shutil, subprocess, sys
+from ConfigParser import RawConfigParser
+from distutils.command.register import register as RegisterCommand
+from distutils.dist import Distribution
 from optparse import OptionParser
 
 from .eggs import create_egg, write_egg
@@ -52,26 +55,38 @@ def main():
 
     base = os.path.abspath('.') # TODO: allow command line to specify
 
+    # Use a distutils "Distribution" object to store package metadata.
+
+    dist = Distribution()
+    metadata = dist.metadata
+
+    # Open our ini file.
+
+    ini = RawConfigParser()
+    ini.readfp(open('pyron.ini'))
+    metadata.url = ini.get('package', 'url')
+
     # Look at the package being developed with Pyron, and introspect all
     # of the essential facts about it.
 
     readme_path = find_readme(base)
-    package_name, description, body = inspect_readme(readme_path)
+    metadata.name, metadata.description, metadata.long_description \
+        = inspect_readme(readme_path)
 
     init_path = join(base, '__init__.py')
     values = parse_project_init(init_path)
-
+    metadata.version = values['__version__']
     __author__ = values['__author__']
-    author, author_email = email.utils.parseaddr(__author__)
-    if not author:
+    metadata.author, metadata.author_email = email.utils.parseaddr(__author__)
+    if not metadata.author:
         die('the __author__ defined in your __init__.py must include both'
             ' a name and an email address, like "Ed <ed@example.com>"')
 
     # Make it possible for the package under development to be imported,
     # without making the user create its namespace packages by hand.
 
-    loader = PyronLoader(package_name, base, init_path)
-    finder = PyronFinder({ package_name: loader })
+    loader = PyronLoader(metadata.name, base, init_path)
+    finder = PyronFinder({ metadata.name: loader })
     sys.meta_path.append(finder)
 
     if '__requires__' in values:
@@ -82,10 +97,8 @@ def main():
 
     facts = {}
 
-    setup_args = {}
-
     if '__url__' in values:
-        setup_args['url'] = values['__url__']
+        metadata.url = values['__url__']
 
     #facts = scan_package(package_name, base, dotdir)
 
@@ -114,18 +127,7 @@ def main():
     #elif cmd == 'test':
     #    os.execvp(python, [ python ] + sys.argv[2:])
     elif cmd == 'register':
-        from distutils.command.register import register
-        from distutils.dist import Distribution
-        dist = Distribution(dict(
-                name=package_name,
-                version=values['__version__'],
-                description=description,
-                long_description=body,
-                #license = 'GPL',
-                author=author,
-                author_email=author_email,
-                ))
-        cmd = register(dist)
+        cmd = RegisterCommand(dist)
         cmd.run()
         #subprocess.check_call([
         #        join('bin', 'python'), 'setup.py', '-q', sys.argv[1],
