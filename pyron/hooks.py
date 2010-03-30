@@ -41,7 +41,7 @@ class PyronLoader(object):
 class PyronFinder(object):
     """PEP-302 compliant finder for packages being developed with Pyron."""
 
-    def __init__(self, loaders):
+    def __init__(self):
         self.loaders = {}
 
     def add(self, fullname, loader):
@@ -52,10 +52,6 @@ class PyronFinder(object):
         """Return the loader for package `fullname` if we have one."""
         return self.loaders.get(fullname, None)
 
-def warn(message):
-    sys.stderr.write('Warning: ' + message + '\n')
-    sys.stderr.flush()
-
 def install_import_hook(inipaths):
     """Install an import hook for each package whose ``.ini`` file is listed.
 
@@ -64,25 +60,30 @@ def install_import_hook(inipaths):
     that it describes.
 
     """
-    return
     if not inipaths:
         return
 
     finder = PyronFinder()
+    error = False
 
     for inipath in inipaths:
         if not os.path.exists(inipath):
-            warn(u'file has gone missing: ' + inipath)
+            error = True
             continue
         config = RawConfigParser()
         config.readfp(open(inipath))
         try:
             fullname = config.get('package', 'name')
         except NoOptionError:
-            warn(u'missing "name" in [package] section: ' + inipath)
+            error = True
             continue
         dirpath = os.path.dirname(inipath)
         initpath = os.path.join(dirpath, '__init__.py')
         loader = PyronLoader(fullname, dirpath, initpath)
+
+    if error:
+        sys.stderr.write('Warning: Pyron environment damaged;'
+                         ' run "pyron status" for details\n\n')
+        sys.stderr.flush()
 
     sys.meta_path.append(finder)

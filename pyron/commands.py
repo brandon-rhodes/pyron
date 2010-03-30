@@ -32,11 +32,6 @@ def cmd_add(paths):
     paths = [ expand_ini_path(p) for p in paths ]
     pth.add(paths)
 
-def cmd_list():
-    config_paths = pth.pth_load()
-    for config_path in config_paths:
-        pyron.config.read(config_path)
-
 def cmd_remove(things):
     config_paths = pth.pth_load()
     for thing in things:
@@ -46,16 +41,24 @@ def cmd_remove(things):
             die('not installed: %s' % (thing,))
     pth.pth_save(config_paths)
 
+def cmd_status():
+    config_paths = pth.pth_load()
+    for config_path in config_paths:
+        print config_path
+        dist = pyron.config.read(config_path)
+        print "    Package:", dist.metadata.name
+        print
+
 def main():
     command = sys.argv[1]
     args = sys.argv[2:]
     try:
         if command == 'add':
             cmd_add(args)
-        elif command == 'list':
-            cmd_list()
         elif command in ['remove', 'rm']:
             cmd_remove(args)
+        elif command in ['status', 'st']:
+            cmd_status()
     except RuntimeError, e:
         sys.stderr.write('Error: ')
         sys.stderr.write(str(e))
