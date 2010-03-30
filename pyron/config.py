@@ -20,6 +20,8 @@ def read(config_path):
         raise RuntimeError('missing "name" in [package] section: %s'
                            % (config_path,))
 
+    metadata.version = '1.1'
+
     dist.entry_points = {}  # add unauthorized Distribute attribute (gulp!)
     if config.has_section('console_scripts'):
         csdict = dict(config.items('console_scripts'))

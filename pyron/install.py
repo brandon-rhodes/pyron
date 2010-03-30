@@ -41,7 +41,8 @@ class FakeDistribution(object):
         self.dist = dist
 
     def as_requirement(self):
-        return '%s=%s' % (self.dist.name, self.dist.version)
+        metadata = self.dist.metadata
+        return '%s==%s' % (metadata.name, metadata.version)
 
     def get_entry_map(self, group):
         return self.dist.entry_points.get(group, None) or {}
