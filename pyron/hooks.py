@@ -18,6 +18,9 @@ import pkgutil
 import sys
 from ConfigParser import RawConfigParser, NoOptionError
 
+# Ugh, the setuptools.
+import pkg_resources
+
 sys.dont_write_bytecode = True
 
 # Since imp.load_module() will not accept a StringIO() "file" as input,
@@ -108,14 +111,13 @@ def install_import_hook(inipaths):
         # Lie for now.
         version = '1.1'
 
-        # Experiment with adding distribution data to pkg_requires
-        import pkg_resources
-        #print pkg_resources.working_set.by_key
-        #print type(pkg_resources.working_set.by_key['pip'])
-        print "HERE", fullname
+        # Create a pkg_resources "Distribution" describing this
+        # development package and its entry points.
+
         dist = pkg_resources.Distribution(
             project_name=fullname,
             version=version,
+            location=dirpath,
             )
         dist._ep_map = {
             'console_scripts': {
@@ -126,8 +128,25 @@ def install_import_hook(inipaths):
                     dist=dist,
                     ),
                 },
+            'cursive.commands': {
+                'wc': pkg_resources.EntryPoint(
+                    name='wc',
+                    module_name='cursive.tools.wc',
+                    attrs=('command',),
+                    dist=dist,
+                    ),
+                },
             }
-        pkg_resources.working_set.by_key[fullname] = dist
+
+        # Add the development distribution to the pkg_resources working
+        # set, but refuse to let its path get added to sys.path.  This
+        # might be dangerous if pkg_resources later winds up expecting
+        # "sys.path" and its own "entries" to match, in which case the
+        # "sys.path" entry could perhaps be disabled rather than simply
+        # removed.
+
+        pkg_resources.working_set.add(dist)
+        sys.path.remove(dist.location)
 
     if error:
         sys.stderr.write('Warning: Pyron environment damaged;'
@@ -135,5 +154,3 @@ def install_import_hook(inipaths):
         sys.stderr.flush()
 
     sys.meta_path.append(finder)
-    #import cursive.tools
-    print "DDDDDOOOOOOOONNNNNNNNNE"
