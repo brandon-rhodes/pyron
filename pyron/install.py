@@ -108,18 +108,12 @@ def pth_save(paths):
     """
     p = pth_path()
     f = open(p, 'w')
-    f.write(TEMPLATE % (paths,))
+    uniq_paths = []  # during development, make multiple "add"s idempotent
+    for p in paths:
+        if p not in uniq_paths:
+            uniq_paths.append(p)
+    f.write(TEMPLATE % (uniq_paths,))
     f.close()
-
-def _pth_packages():
-    """Return a Package for each ``.ini`` in the Pyron ``.pth`` file."""
-    ini_list = _pth_load()
-    return ini_list
-
-def list():
-    """Display a list of currently active packages."""
-    packages = _pth_packages()
-    print packages
 
 def add(paths):
     """Add a list of paths to the paths already in our ``.pth`` file."""

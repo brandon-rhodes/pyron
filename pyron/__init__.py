@@ -20,10 +20,8 @@ from distutils.dist import Distribution
 from optparse import OptionParser
 
 from .eggs import create_egg, write_egg
-from .importer import PyronFinder, PyronLoader
 from .introspect import parse_project_init
 from .readme import find_readme, inspect_readme
-#from .scan import scan_package
 
 def die(message):
     sys.stderr.write('pyron: ' + message + '\n')

@@ -12,12 +12,31 @@ re-implements small pieces of core Pyron logic - like how to parse a
 packages.
 
 """
-from ConfigParser import RawConfigParser, NoOptionError
 import imp
 import os
+import pkgutil
 import sys
+from ConfigParser import RawConfigParser, NoOptionError
 
 sys.dont_write_bytecode = True
+
+# Since imp.load_module() will not accept a StringIO() "file" as input,
+# we have to provide a real empty file for it to parse!
+this_dir = os.path.dirname(os.path.abspath(__file__))
+empty_file_path = os.path.join(this_dir, 'empty_file.txt')
+
+class NamespacePackageLoader(object):
+    """PEP-302 compliant loader for namespace packages."""
+
+    def load_module(self, fullname):
+        """Return a new namespace package that itself contains no code."""
+        f = open(empty_file_path)
+        try:
+            m = imp.load_module(fullname, f, '', ('.py', 'U', 1))
+            m.__path__ = pkgutil.extend_path([], fullname)
+            return m
+        finally:
+            f.close()
 
 class PyronLoader(object):
     """PEP-302 compliant loader for packages being developed with Pyron."""
@@ -44,9 +63,13 @@ class PyronFinder(object):
     def __init__(self):
         self.loaders = {}
 
-    def add(self, fullname, loader):
+    def add(self, loader):
         """Add a loader for the package named `fullname`."""
+        fullname = loader.fullname
         self.loaders[fullname] = loader
+        while '.' in fullname:
+            fullname = fullname.rsplit('.')[0]
+            self.loaders[fullname] = NamespacePackageLoader()
 
     def find_module(self, fullname, path=None):
         """Return the loader for package `fullname` if we have one."""
@@ -80,6 +103,31 @@ def install_import_hook(inipaths):
         dirpath = os.path.dirname(inipath)
         initpath = os.path.join(dirpath, '__init__.py')
         loader = PyronLoader(fullname, dirpath, initpath)
+        finder.add(loader)
+
+        # Lie for now.
+        version = '1.1'
+
+        # Experiment with adding distribution data to pkg_requires
+        import pkg_resources
+        #print pkg_resources.working_set.by_key
+        #print type(pkg_resources.working_set.by_key['pip'])
+        print "HERE", fullname
+        dist = pkg_resources.Distribution(
+            project_name=fullname,
+            version=version,
+            )
+        dist._ep_map = {
+            'console_scripts': {
+                'cursive': pkg_resources.EntryPoint(
+                    name='cursive',
+                    module_name='cursive.tools.cursive',
+                    attrs=('console_script_cursive',),
+                    dist=dist,
+                    ),
+                },
+            }
+        pkg_resources.working_set.by_key[fullname] = dist
 
     if error:
         sys.stderr.write('Warning: Pyron environment damaged;'
@@ -87,3 +135,5 @@ def install_import_hook(inipaths):
         sys.stderr.flush()
 
     sys.meta_path.append(finder)
+    #import cursive.tools
+    print "DDDDDOOOOOOOONNNNNNNNNE"
