@@ -1,14 +1,18 @@
-"""Routines for managing the Pyron ``.pth`` file.
+"""Routines for managing the current Python installation.
 
-When the ``pyron`` command is used to activate a development package,
-the package is added to a list of active packages contained in the
-``pyron-packages.pth`` file in Python's ``site-packages`` directory.
-This module contains both the routines with which Pyron manages its
-``.pth``, and also the ``hook()`` function which the file itself calls
-during Python startup to get the Pyron-governed packages ready to be
-imported.
+Pyron alters the Python installation in which it has been installed.
+This should generally be a virtualenv, though some developers might try
+using Pyron with their system Python, or with an instance of Python that
+they have built with a different "--prefix".  Pyron makes two changes to
+its home installtion:
 
-import pyron.pth; pyron.pth.import()
+* It creates a "pyron-packages.pth" file in "site-packages" that tells
+  Python how to import the development packages that have been activated
+  with "pyron add".
+
+* It creates and deletes console scripts in the "bin" directory as
+  development packages are added and deleted.
+
 """
 import os
 import sys
@@ -21,7 +25,11 @@ TEMPLATE = """\
 import pyron.hooks; pyron.hooks.install_import_hook(%r)
 """
 
-def _pth_path():
+def bin_path():
+    """Compute where console scripts should be installed."""
+    return os.path.join(sys.prefix, 'bin')
+
+def pth_path():
     """Compute where the Pyron ``.pth`` file should live, if it exists."""
     for p in sys.path:
         if os.path.basename(p) == 'site-packages':
@@ -29,7 +37,7 @@ def _pth_path():
 
 def pth_load():
     """Return the ``.ini`` files in the current Pyron ``.pth`` file."""
-    p = _pth_path()
+    p = pth_path()
     if p is not None and os.path.isfile(p):
         lines = open(p).readlines()
         if lines:
@@ -48,7 +56,7 @@ def pth_save(paths):
     information there and rewriting it from scratch.
 
     """
-    p = _pth_path()
+    p = pth_path()
     f = open(p, 'w')
     f.write(TEMPLATE % (paths,))
     f.close()

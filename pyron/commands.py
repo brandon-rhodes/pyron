@@ -2,7 +2,7 @@
 import os
 import sys
 import pyron.config
-from pyron import pth
+from pyron import install
 
 def complain(message):
     """Print the error `message` to standard error."""
@@ -30,23 +30,35 @@ def expand_ini_path(path):
 
 def cmd_add(paths):
     paths = [ expand_ini_path(p) for p in paths ]
-    pth.add(paths)
+    install.add(paths)
 
 def cmd_remove(things):
-    config_paths = pth.pth_load()
+    config_paths = install.pth_load()
     for thing in things:
+        ething = expand_ini_path
         if thing in config_paths:
             config_paths.remove(thing)
-        else:
-            die('not installed: %s' % (thing,))
-    pth.pth_save(config_paths)
+            continue
+        ething = expand_ini_path(thing)
+        if ething in config_paths:
+            config_paths.remove(ething)
+            continue
+        complain('not installed: %s' % (thing,))
+    install.pth_save(config_paths)
 
 def cmd_status():
-    config_paths = pth.pth_load()
+    config_paths = install.pth_load()
+    binpath = install.bin_path()
     for config_path in config_paths:
         print config_path
         dist = pyron.config.read(config_path)
-        print "    Package:", dist.metadata.name
+        print '    Package:', dist.metadata.name
+        if 'console_scripts' in dist.entry_points:
+            for script, pyname in dist.entry_points['console_scripts']:
+                print '    Console-script: %s (%s)' % (script, pyname)
+                script_path = os.path.join(binpath, script)
+                if not os.path.exists(script_path):
+                    print '        ERROR: SCRIPT MISSING'
         print
 
 def main():
