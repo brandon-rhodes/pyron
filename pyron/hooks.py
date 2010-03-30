@@ -21,6 +21,8 @@ from ConfigParser import RawConfigParser, NoOptionError
 # Ugh, the setuptools.
 import pkg_resources
 
+import pyron.introspect
+
 sys.dont_write_bytecode = True
 
 # Since imp.load_module() will not accept a StringIO() "file" as input,
@@ -108,15 +110,16 @@ def install_import_hook(inipaths):
         loader = PyronLoader(fullname, dirpath, initpath)
         finder.add(loader)
 
-        # Lie for now.
-        version = '1.1'
+        # Figure out the version.
+
+        initvalues = pyron.introspect.parse_project_init(initpath)
 
         # Create a pkg_resources "Distribution" describing this
         # development package.
 
         dist = pkg_resources.Distribution(
             project_name=fullname,
-            version=version,
+            version=initvalues['__version__'],
             location=dirpath,
             )
 
