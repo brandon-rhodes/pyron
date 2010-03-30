@@ -22,6 +22,7 @@ def read(config_path):
 
     dist.entry_points = {}  # add unauthorized Distribute attribute (gulp!)
     if config.has_section('console_scripts'):
-        dist.entry_points['console_scripts'] = config.items('console_scripts')
+        csdict = dict(config.items('console_scripts'))
+        dist.entry_points['console_scripts'] = csdict
 
     return dist

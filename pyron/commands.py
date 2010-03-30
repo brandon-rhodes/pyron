@@ -29,8 +29,11 @@ def expand_ini_path(path):
     return p
 
 def cmd_add(paths):
-    paths = [ expand_ini_path(p) for p in paths ]
-    install.add(paths)
+    for path in paths:
+        path = expand_ini_path(path)
+        dist = pyron.config.read(path)
+        install.add_scripts(dist)
+        install.add([ path ])
 
 def cmd_remove(things):
     config_paths = install.pth_load()
@@ -54,7 +57,8 @@ def cmd_status():
         dist = pyron.config.read(config_path)
         print '    Package:', dist.metadata.name
         if 'console_scripts' in dist.entry_points:
-            for script, pyname in dist.entry_points['console_scripts']:
+            scripts = sorted(dist.entry_points['console_scripts'].items())
+            for script, pyname in scripts:
                 print '    Console-script: %s (%s)' % (script, pyname)
                 script_path = os.path.join(binpath, script)
                 if not os.path.exists(script_path):
