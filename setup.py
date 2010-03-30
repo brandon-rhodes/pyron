@@ -20,6 +20,6 @@ setup(name = 'pyron',
         ],
       packages = [ 'pyron' ],
       entry_points = {
-        'console_scripts': [ 'pyron = pyron:main', ],
+        'console_scripts': [ 'pyron = pyron.commands:main', ],
         }
       )
