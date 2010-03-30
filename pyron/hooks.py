@@ -112,31 +112,23 @@ def install_import_hook(inipaths):
         version = '1.1'
 
         # Create a pkg_resources "Distribution" describing this
-        # development package and its entry points.
+        # development package.
 
         dist = pkg_resources.Distribution(
             project_name=fullname,
             version=version,
             location=dirpath,
             )
-        dist._ep_map = {
-            'console_scripts': {
-                'cursive': pkg_resources.EntryPoint(
-                    name='cursive',
-                    module_name='cursive.tools.cursive',
-                    attrs=('console_script_cursive',),
-                    dist=dist,
-                    ),
-                },
-            'cursive.commands': {
-                'wc': pkg_resources.EntryPoint(
-                    name='wc',
-                    module_name='cursive.tools.wc',
-                    attrs=('command',),
-                    dist=dist,
-                    ),
-                },
-            }
+
+        # If the package includes entry points, then load them into the
+        # distribution as well.
+
+        entry_points_path = os.path.join(dirpath, 'entry_points.ini')
+        if os.path.isfile(entry_points_path):
+            f = open(entry_points_path)
+            body = f.read()
+            f.close()
+            dist._ep_map = pkg_resources.EntryPoint.parse_map(body, dist)
 
         # Add the development distribution to the pkg_resources working
         # set, but refuse to let its path get added to sys.path.  This
