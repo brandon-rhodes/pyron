@@ -23,7 +23,7 @@ sys.dont_write_bytecode = True
 # Since imp.load_module() will not accept a StringIO() "file" as input,
 # we have to provide a real empty file for it to parse!
 this_dir = os.path.dirname(os.path.abspath(__file__))
-empty_file_path = os.path.join(this_dir, 'empty_file.txt')
+empty_file_path = os.path.join(this_dir, 'empty_init.py.txt')
 
 class NamespacePackageLoader(object):
     """PEP-302 compliant loader for namespace packages."""

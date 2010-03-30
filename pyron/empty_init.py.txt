@@ -1,0 +1,1 @@
+# Pyron supplies this file as the code of each namespace package it creates.
