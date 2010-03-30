@@ -1,12 +1,17 @@
 """The Pyron command-line tool."""
 import os
 import sys
+import pyron.config
 from pyron import pth
 
+def complain(message):
+    """Print the error `message` to standard error."""
+    sys.stdout.write('Error: %s\n' % (message,))
+    sys.stdout.flush()
+
 def die(message, exitcode=1):
-    """Print the `message` to standard error and exit."""
-    sys.stdout.write(message)
-    sys.stdout.write('\n')
+    """Print the error `message` to standard error and exit."""
+    complain(message)
     exit(exitcode)
 
 def expand_ini_path(path):
@@ -28,19 +33,31 @@ def cmd_add(paths):
     pth.add(paths)
 
 def cmd_list():
-    inis = pth.pth_load()
-    for ini in inis:
-        print ini
+    config_paths = pth.pth_load()
+    for config_path in config_paths:
+        pyron.config.read(config_path)
 
 def cmd_remove(things):
-    pass
+    config_paths = pth.pth_load()
+    for thing in things:
+        if thing in config_paths:
+            config_paths.remove(thing)
+        else:
+            die('not installed: %s' % (thing,))
+    pth.pth_save(config_paths)
 
 def main():
     command = sys.argv[1]
     args = sys.argv[2:]
-    if command == 'add':
-        cmd_add(args)
-    elif command == 'list':
-        cmd_list()
-    elif command in ['remove', 'rm']:
-        cmd_remove(args)
+    try:
+        if command == 'add':
+            cmd_add(args)
+        elif command == 'list':
+            cmd_list()
+        elif command in ['remove', 'rm']:
+            cmd_remove(args)
+    except RuntimeError, e:
+        sys.stderr.write('Error: ')
+        sys.stderr.write(str(e))
+        sys.stderr.write('\n')
+        sys.exit(1)

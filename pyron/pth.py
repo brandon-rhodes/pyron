@@ -15,10 +15,10 @@ import sys
 
 FILENAME = 'pyron-packages.pth'
 TEMPLATE = """\
-# This .pth file is generated and maintained by Pyron.  You can run
-# "pyron list" to review which Python projects are listed here.  Use the
-# "pyron add" and "pyron remove" commands to modfiy this list.
-import pyron.pth; pyron.pth.activate(%r)
+# This .pth file is generated and maintained by Pyron.  Run "pyron help"
+# to learn about the sub-commands with which you can view, modify, and
+# manage this list of development packages.
+import pyron.hooks; pyron.hooks.install_import_hook(%r)
 """
 
 def _pth_path():
@@ -41,7 +41,7 @@ def pth_load():
     # If the attempt to read the .pth file fails, return an empty list.
     return []
 
-def _pth_save(paths):
+def pth_save(paths):
     """Save a list of ``.ini`` file paths to the Pyron ``.pth`` file.
 
     This overwrites the current version of the file, destroying any
@@ -67,11 +67,7 @@ def add(paths):
     """Add a list of paths to the paths already in our ``.pth`` file."""
     ini_paths = pth_load()
     ini_paths.extend(paths)
-    _pth_save(ini_paths)
+    pth_save(ini_paths)
 
 def remove(p):
-    pass
-
-def activate(ini_paths):
-    """"""
     pass
