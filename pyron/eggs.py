@@ -55,6 +55,9 @@ def create_egg(project):
                    ''.join(name + '\n' for name in namespace_packages))
     z.writestr('EGG-INFO/top_level.txt', parent + '\n')
 
+    if project.requires:
+        z.writestr('EGG-INFO/requires.txt', '\n'.join(project.requires))
+
     entry_points = project.read_entry_points()
     if entry_points is not None:
         z.writestr('EGG-INFO/entry_points.txt', entry_points)

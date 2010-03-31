@@ -31,6 +31,10 @@ class Project(object):
         self.consts = parse_project_init(self.file('__init__.py'))
         self.name = self.config.get('package', 'name')
         self.version = self.consts['__version__']
+        if self.config.has_option('package', 'requires'):
+            self.requires = self.config.get('package', 'requires').split()
+        else:
+            self.requires = []
 
     def file(self, name):
         """Return the path to the file `name` in the project directory."""
