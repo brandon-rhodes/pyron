@@ -86,7 +86,7 @@ def pth_path():
             return os.path.join(p, FILENAME)
 
 def pth_load():
-    """Return the ``.ini`` files in the current Pyron ``.pth`` file."""
+    """Return the paths in the current Pyron ``.pth`` file."""
     p = pth_path()
     if p is not None and os.path.isfile(p):
         lines = open(p).readlines()
@@ -100,7 +100,7 @@ def pth_load():
     return []
 
 def pth_save(paths):
-    """Save a list of ``.ini`` file paths to the Pyron ``.pth`` file.
+    """Save a list paths to the Pyron ``.pth`` file.
 
     This overwrites the current version of the file, destroying any
     information there and rewriting it from scratch.

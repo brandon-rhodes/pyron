@@ -1,41 +1,50 @@
 """The Pyron import hook.
 
-Every time Python starts up, Pyron needs to make sure that every module
-under development is ready to be imported should an ``import`` statement
-name them.  Therefore, Pyron installs a ``pyron-packages.pth`` file in
-the current Python environment's ``site-packages`` directory, and makes
-that file call the `install_import_hook()` function defined here.
+Every a Pyron-powered Python installation starts up, the
+``pyron-packages.pth`` file that Pyron has placed in ``site-packages``
+invokes the `install_import_hook()` method given below.  This method has
+three tasks:
 
-Because this module is invoked every time Python runs, it deliberately
-re-implements small pieces of core Pyron logic - like how to parse a
-``pyron.ini`` file - to avoid importing anything but core Python
-packages.
+1. Inspect and build a list of all of the currently active Pyron
+   development packages.
+
+2. Install a Pyron-specific import "finder" on `sys.meta_path` that can
+   import the development packages if they are asked for.
+
+3. Create a Distribution object for each development package, and
+   install it in the `pkg_resources` central registry so that its entry
+   points are available if queried.
 
 """
 import imp
 import os
 import pkgutil
 import sys
-from ConfigParser import RawConfigParser, NoOptionError
 
 # Ugh, the setuptools.
 import pkg_resources
 
-import pyron.introspect
+import pyron.dist
 
 sys.dont_write_bytecode = True
 
 # Since imp.load_module() will not accept a StringIO() "file" as input,
 # we have to provide a real empty file for it to parse!
+
 this_dir = os.path.dirname(os.path.abspath(__file__))
-empty_file_path = os.path.join(this_dir, 'empty_init.py.txt')
+empty_init_path = os.path.join(this_dir, 'empty_init.py.txt')
+
+#
+# The package finder and loaders and power the importation of
+# development packages.
+#
 
 class NamespacePackageLoader(object):
     """PEP-302 compliant loader for namespace packages."""
 
     def load_module(self, fullname):
-        """Return a new namespace package that itself contains no code."""
-        f = open(empty_file_path)
+        """Return a new namespace package."""
+        f = open(empty_init_path)
         try:
             m = imp.load_module(fullname, f, '', ('.py', 'U', 1))
             m.__path__ = pkgutil.extend_path([], fullname)
@@ -43,18 +52,18 @@ class NamespacePackageLoader(object):
         finally:
             f.close()
 
-class PyronLoader(object):
+class PyronPackageLoader(object):
     """PEP-302 compliant loader for packages being developed with Pyron."""
 
-    def __init__(self, fullname, package_dir, init_path):
+    def __init__(self, fullname, package_dir):
         self.fullname = fullname
         self.package_dir = package_dir
-        self.init_path = init_path
 
     def load_module(self, fullname):
         """Load and return the package."""
         assert fullname == self.fullname  # PyronFinder called right loader
-        f = open(self.init_path)
+        init_path = os.path.join(self.package_dir, '__init__.py')
+        f = open(init_path)
         try:
             m = imp.load_module(fullname, f, self.init_path, ('.py', 'U', 1))
             m.__path__ = [ self.package_dir ]
@@ -62,14 +71,19 @@ class PyronLoader(object):
         finally:
             f.close()
 
-class PyronFinder(object):
+class Finder(object):
     """PEP-302 compliant finder for packages being developed with Pyron."""
 
     def __init__(self):
         self.loaders = {}
 
     def add(self, loader):
-        """Add a loader for the package named `fullname`."""
+        """Add the given loader to this finder.
+
+        If loader's package name contains a dot, then the package's
+        parent packages are also generated as empty namespace packages.
+
+        """
         fullname = loader.fullname
         self.loaders[fullname] = loader
         while '.' in fullname:
@@ -77,61 +91,33 @@ class PyronFinder(object):
             self.loaders[fullname] = NamespacePackageLoader()
 
     def find_module(self, fullname, path=None):
-        """Return the loader for package `fullname` if we have one."""
+        """Return the loader for package `fullname`, if we have one."""
         return self.loaders.get(fullname, None)
 
-def install_import_hook(inipaths):
-    """Install an import hook for each package whose ``.ini`` file is listed.
+#
+# The function called directly from the ``pyron-packages.pth`` file.
+#
 
-    This inspects each ``pyron.ini`` file listed in `inipaths`.  For
-    each file, it installs an import finder and loader for the module
-    that it describes.
+def install_import_hook(project_dirs):
+    """Given a list of ``pyron.ini`` paths, install package import hooks. 
+
+    This inspects each Pyron project having an ``.ini`` file listed in
+    `inipaths`.  For each project, it installs an import finder and
+    loader for the package under development.
 
     """
-    if not inipaths:
+    if not project_dirs:
         return
 
-    finder = PyronFinder()
+    finder = Finder()
     error = False
 
-    for inipath in inipaths:
-        if not os.path.exists(inipath):
-            error = True
-            continue
-        config = RawConfigParser()
-        config.readfp(open(inipath))
-        try:
-            fullname = config.get('package', 'name')
-        except NoOptionError:
-            error = True
-            continue
-        dirpath = os.path.dirname(inipath)
-        initpath = os.path.join(dirpath, '__init__.py')
-        loader = PyronLoader(fullname, dirpath, initpath)
+    for project_dir in project_dirs:
+
+        dist = pyron.dist.make_distribution(project_dir)
+
+        loader = PyronPackageLoader(dist.project_name, project_dir)
         finder.add(loader)
-
-        # Figure out the version.
-
-        initvalues = pyron.introspect.parse_project_init(initpath)
-
-        # Create a pkg_resources "Distribution" describing this
-        # development package.
-
-        dist = pkg_resources.Distribution(
-            project_name=fullname,
-            version=initvalues['__version__'],
-            location=dirpath,
-            )
-
-        # If the package includes entry points, then load them into the
-        # distribution as well.
-
-        entry_points_path = os.path.join(dirpath, 'entry_points.ini')
-        if os.path.isfile(entry_points_path):
-            f = open(entry_points_path)
-            body = f.read()
-            f.close()
-            dist._ep_map = pkg_resources.EntryPoint.parse_map(body, dist)
 
         # Add the development distribution to the pkg_resources working
         # set, but refuse to let its path get added to sys.path.  This

@@ -2,6 +2,7 @@
 import os
 import sys
 import pyron.config
+import pyron.dist
 from pyron import install
 
 def complain(message):
@@ -14,23 +15,24 @@ def die(message, exitcode=1):
     complain(message)
     exit(exitcode)
 
-def expand_ini_path(path):
-    """Return the path to the ``.ini`` file at or beneath `path`.
+def normalize_project_path(path):
+    """Return a project directory, even if its ``pyron.ini`` is supplied.
 
-    If `path` already ends with an ``.ini`` filename, then `path` itself
-    is returned.  Otherwise, `path` is assumed to be the name of a
-    directory, and the return value is `path` plus ``/pyron.ini``.
+    The `path` can be relative or absolute, but the return value will
+    always be an absolute path.  The `path` can either refer to the
+    project directory itself, or to the ``pyron.ini`` file inside.
 
     """
-    p = os.path.abspath(path)
-    b = os.path.basename(p)
-    if len(b) < 5 or not b.lower().endswith('.ini'):
-        p = os.path.join(p, 'pyron.ini')
-    return p
+    a = os.path.abspath(path)
+    b = os.path.basename(a)
+    if b == 'pyron.ini':
+        return os.path.dirname(a)
+    else:
+        return a
 
 def cmd_add(paths):
     for path in paths:
-        path = expand_ini_path(path)
+        path = normalize_project_path(path)
         dist = pyron.config.read(path)
         install.add_scripts(dist)
         install.add([ path ])
@@ -50,19 +52,19 @@ def cmd_remove(things):
     install.pth_save(config_paths)
 
 def cmd_status():
-    config_paths = install.pth_load()
+    project_paths = install.pth_load()
     binpath = install.bin_path()
-    for config_path in config_paths:
-        print config_path
-        dist = pyron.config.read(config_path)
-        print '    Package:', dist.metadata.name
-        if 'console_scripts' in dist.entry_points:
-            scripts = sorted(dist.entry_points['console_scripts'].items())
-            for script, pyname in scripts:
-                print '    Console-script: %s (%s)' % (script, pyname)
-                script_path = os.path.join(binpath, script)
-                if not os.path.exists(script_path):
-                    print '        ERROR: SCRIPT MISSING'
+    for project_path in project_paths:
+        print project_path
+        dist = pyron.dist.make_distribution(project_path)
+        print '    Package:', dist.project_name
+        script_list = sorted(dist.get_entry_map('console_scripts').items())
+        for name, entry in script_list:
+            print '    Console-script: %s (%s:%s)' % (
+                name, entry.module_name, '.'.join(entry.attrs))
+            script_path = os.path.join(binpath, name)
+            if not os.path.exists(script_path):
+                print '        ERROR: SCRIPT MISSING'
         print
 
 def main():

@@ -1,4 +1,4 @@
-"""Routines to parse an ``__init__.py`` for version and author info."""
+"""Routines to parse an ``__init__.py`` for version and author information."""
 
 import _ast, sys
 

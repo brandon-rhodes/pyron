@@ -1,30 +1,33 @@
-"""Routines for reading ``pyron.ini`` configuration files."""
+"""Routines for reading various configuration files."""
 
-from ConfigParser import RawConfigParser, NoOptionError
-from distutils.dist import Distribution
+from ConfigParser import RawConfigParser #, NoOptionError
+from pkg_resources import EntryPoint
 
-def read(config_path):
-    """Read the ``pyron.ini`` file at the given path."""
-    dist = Distribution()
-    metadata = dist.metadata
+def read_pyron_ini(path):
+    """Read a project's ``pyron.ini``, returning a ConfigParser."""
+    try:
+        f = open(path)
+    except IOError:
+        raise RuntimeError('cannot open file: %s' % (path,))
 
     config = RawConfigParser()
     try:
-        f = open(config_path)
         config.readfp(f)
     except IOError:
-        raise RuntimeError('cannot read file: %s' % (config_path,))
+        raise RuntimeError('cannot read file: %s' % (path,))
+    finally:
+        f.close()
+
+    if not config.has_option('package', 'name'):
+        raise RuntimeError('missing "name" in [package] section: %s' % (path,))
+
+    return config
+
+def read_entry_points_ini(path, dist):
+    """Update a Distribution `dist` with entry points defined in `path`."""
+    f = open(path)
     try:
-        metadata.name = config.get('package', 'name')
-    except NoOptionError:
-        raise RuntimeError('missing "name" in [package] section: %s'
-                           % (config_path,))
-
-    metadata.version = '1.1' # TODO change this to grab from __init__.py
-
-    dist.entry_points = {}  # add unauthorized Distribute attribute (gulp!)
-    if config.has_section('console_scripts'):
-        csdict = dict(config.items('console_scripts'))
-        dist.entry_points['console_scripts'] = csdict
-
-    return dist
+        body = f.read()
+    finally:
+        f.close()
+    dist._ep_map = EntryPoint.parse_map(body, dist)
