@@ -50,7 +50,7 @@ def parse_project_init(init_path):
             for target, value in zip(targets, values):
                 global_constants[target.id] = value
 
-    for name in '__version__', '__author__': # '__testrunner__'
+    for name in '__version__',: # '__author__', '__testrunner__'
         if name not in global_constants:
             raise die('your module does not define %r at the top level' % name)
 

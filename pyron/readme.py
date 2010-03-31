@@ -50,8 +50,8 @@ def inspect_readme(path):
 
     match = README_MATCH(readme)
     if match:
-        package_name = match.group(0)
-        description = match.group(1)
+        package_name = match.group(1)
+        description = match.group(2)
         body = readme[match.end():]
         return package_name, description, body
 
