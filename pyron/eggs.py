@@ -77,4 +77,9 @@ def write_egg(name, version, version_info, egg_data):
         pkg_resources.to_filename(pkg_resources.safe_name(name)),
         pkg_resources.to_filename(pkg_resources.safe_version(version)),
         version_info)
-    open(filename, 'w').write(egg_data)
+    f = open(filename, 'w')
+    try:
+        f.write(egg_data)
+    finally:
+        f.close()
+    return filename

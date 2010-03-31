@@ -4,6 +4,7 @@ import os
 import sys
 
 import pyron.config
+import pyron.eggs
 import pyron.dist
 import pyron.install
 
@@ -39,6 +40,16 @@ def cmd_add(args):
         dist = pyron.dist.make_distribution(path)
         pyron.install.add(dist)
 
+def cmd_egg(args):
+    paths = args.project
+    for path in paths:
+        path = normalize_project_path(path)
+        dist = pyron.dist.make_distribution(path)
+        egg_data = pyron.eggs.create_egg(dist.project_name, dist.location)
+        filename = pyron.eggs.write_egg(dist.project_name, dist.version,
+                                        sys.version_info, egg_data)
+        print 'Wrote:', filename
+
 def cmd_remove(args):
     things = args.project
     project_paths = pyron.install.pth_load()
@@ -70,18 +81,27 @@ def cmd_status(arg):
 
 def main():
     parser = argparse.ArgumentParser(prog='pyron')
-    subparsers = parser.add_subparsers(title='Supported commands')
+    subparsers = parser.add_subparsers(title='Argument', metavar='COMMAND')
     sap = subparsers.add_parser
 
-    p = sap('add', help='add a project to active development')
-    p.add_argument('project', nargs='+', help='path to a Pyron project')
+    # More commands to add: egg, register
+
+    p = sap('add', help='Add a project to active development')
+    p.add_argument('project', default='.', nargs='*',
+                   help='Pyron project path (defaults to current directory)')
     p.set_defaults(func=cmd_add)
 
-    p = sap('remove', help='remove a project from development')
-    p.add_argument('project', nargs='+', help='path to a Pyron project')
+    p = sap('egg', help='Build an egg for distribution')
+    p.add_argument('project', default='.', nargs='+',
+                   help='Pyron project path')
+    p.set_defaults(func=cmd_egg)
+
+    p = sap('remove', help='Remove a project from active development ("rm")')
+    p.add_argument('project', default='.', nargs='*',
+                   help='Pyron project path (defaults to current directory)')
     p.set_defaults(func=cmd_remove)
 
-    p = sap('status', help='list the currently active projects')
+    p = sap('status', help='List the currently active projects ("st")')
     p.set_defaults(func=cmd_status)
 
     # Rename ugly "optional arguments" titles.
@@ -95,4 +115,7 @@ def main():
     subparsers.choices['rm'] = subparsers.choices['remove']
 
     args = parser.parse_args()
-    return args.func(args)
+    try:
+        return args.func(args)
+    except RuntimeError, e:
+        die(str(e))
