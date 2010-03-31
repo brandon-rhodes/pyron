@@ -24,7 +24,7 @@ import sys
 # Ugh, the setuptools.
 import pkg_resources
 
-import pyron.dist
+import pyron.project
 
 sys.dont_write_bytecode = True
 
@@ -114,7 +114,7 @@ def install_import_hook(project_dirs):
 
     for project_dir in project_dirs:
 
-        dist = pyron.dist.make_distribution(project_dir)
+        dist = pyron.project.Project(project_dir).prdist
 
         loader = PyronPackageLoader(dist.project_name, project_dir)
         finder.add(loader)

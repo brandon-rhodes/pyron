@@ -5,8 +5,8 @@ import sys
 
 import pyron.config
 import pyron.eggs
-import pyron.dist
 import pyron.install
+import pyron.project
 
 def complain(message):
     """Print the error `message` to standard error."""
@@ -37,23 +37,34 @@ def cmd_add(args):
     paths = args.project
     for path in paths:
         path = normalize_project_path(path)
-        dist = pyron.dist.make_distribution(path)
+        dist = pyron.project.Project(path).prdist
         pyron.install.add(dist)
 
 def cmd_egg(args):
     paths = args.project
     for path in paths:
         path = normalize_project_path(path)
-        dist = pyron.dist.make_distribution(path)
+        dist = pyron.project.Project(path).prdist
         egg_data = pyron.eggs.create_egg(dist.project_name, dist.location)
         filename = pyron.eggs.write_egg(dist.project_name, dist.version,
                                         sys.version_info, egg_data)
         print 'Wrote:', filename
 
+from distutils.command.register import register as RegisterCommand
+
+def cmd_register(args):
+    paths = args.project
+    for path in paths:
+        path = normalize_project_path(path)
+        project = pyron.project.Project(path)
+        sddist = project.sddist
+        cmd = RegisterCommand(sddist)
+        cmd.run()
+
 def cmd_remove(args):
     things = args.project
     project_paths = pyron.install.pth_load()
-    dists = [ pyron.dist.make_distribution(p) for p in project_paths ]
+    dists = [ pyron.project.Project(p).prdist for p in project_paths ]
     for thing in things:
         for dist in dists:
             if (dist.project_name == thing
@@ -68,7 +79,7 @@ def cmd_status(arg):
     binpath = pyron.install.bin_path()
     for project_path in project_paths:
         print project_path
-        dist = pyron.dist.make_distribution(project_path)
+        dist = pyron.project.Project(project_path).prdist
         print '    Package:', dist.project_name
         script_list = sorted(dist.get_entry_map('console_scripts').items())
         for name, entry in script_list:
@@ -95,6 +106,11 @@ def main():
     p.add_argument('project', default='.', nargs='+',
                    help='Pyron project path')
     p.set_defaults(func=cmd_egg)
+
+    p = sap('register', help='Register a package with PyPI')
+    p.add_argument('project', default='.', nargs='+',
+                   help='Pyron project path')
+    p.set_defaults(func=cmd_register)
 
     p = sap('remove', help='Remove a project from active development ("rm")')
     p.add_argument('project', default='.', nargs='*',

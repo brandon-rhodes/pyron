@@ -1,11 +1,14 @@
 """Routines for examining the README file of a Python project."""
 
-import htmlentitydefs, os.path, re
+import codecs
+import htmlentitydefs
+import re
+import os
 
 join = os.path.join
 
 README_NAMES = ('README', 'README.txt')
-TITLE_MATCH = re.compile(ur'``([A-Za-z_.]+)``\W+(.*)').match
+README_MATCH = re.compile(ur'\n+(``[A-Za-z_.]+`` *-- *)?(.*)\n[=-]*\n').match
 DEFMAP = dict( (unichr(k), v) for (k,v)
                in htmlentitydefs.codepoint2name.items() )
 
@@ -24,53 +27,32 @@ def find_readme(directory):
 def inspect_readme(path):
     """Look in a README file for a package name and description."""
     try:
-        f = open(path, 'U')
-        readme = f.read()
-        f.close()
+        f = codecs.open(path, 'U', 'ascii')
     except IOError, e:
-        raise RuntimeError('cannot read your %s file: %s'
-                           % (path, e.strerror))
-
+        raise RuntimeError('cannot open %s: %s' % (path, e.strerror))
     try:
-        readme = readme.encode('ascii')
+        readme = f.read()
+    except IOError, e:
+        raise RuntimeError('cannot read %s: %s' % (path, e.strerror))
     except UnicodeDecodeError:
         raise RuntimeError(
             'because of the limitations of setuptools and the Python'
             ' Package Index, your %s file must contain Restructured Text'
             ' consisting only of ASCII characters' % path)
+    finally:
+        f.close()
 
-    format_error = RuntimeError(
-        'the beginning of your %s must look like (with your choice of'
-        ' punctuation):\n\n``package`` -- description\n'
-        '==========================\n' % path)
+    def format_error():
+        return RuntimeError(
+            'the beginning of your %s must look like (the package name can'
+            ' omitted):\n\n``package`` -- brief description\n'
+            '================================\n\n' % path)
 
-    # Skip any initial blank lines, until we have a non-blank line
-    # caught in [i0:i1].
-
-    i1 = -1
-    line = None
-    while not line:
-        i0 = i1 + 1
-        i1 = readme.index('\n', i0)
-        if i1 == -1:
-            raise format_error
-        line = readme[i0:i1].strip()
-
-    # Take that first non-blank line and the one that follows.
-
-    title = line
-    i2 = readme.index('\n', i1 + 1)
-    if i2 == -1:
-        raise format_error
-    underline = readme[i1+1:i2].strip()
-    body = readme[i2+1:].lstrip('\n')
-
-    # Parse the package name and description from the title, and return.
-
-    match = TITLE_MATCH(title)
-    if (match and underline == underline[0] * len(underline)):
-        package_name, description = match.groups()
-        if all(package_name.split('.')):
-            return package_name, description, body
+    match = README_MATCH(readme)
+    if match:
+        package_name = match.group(0)
+        description = match.group(1)
+        body = readme[match.end():]
+        return package_name, description, body
 
     raise format_error
