@@ -22,30 +22,10 @@ def bin_path():
     return os.path.join(sys.prefix, 'bin')
 
 #
-# Complex, unhappy routines to fool the setuptools into creating console
+# Complex, unhappy routine to fool the setuptools into creating console
 # scripts for us (so that we do not have to figure out how to create
 # them under Windows and so forth).
 #
-
-class FakeDistribution(object):
-    """Class enough like a Distribution to power script installation.
-
-    By using this simple class to power the ``easy_install`` method that
-    creates wrapper scripts, we provide it with enough information
-    without having to rely on the ``setuptools`` ``Distribution`` object
-    with all of its complexity (which, when ``setuptools`` is imported,
-    is also monkey-patched in place of ``distutils.dist.Distrubtion``).
-
-    """
-    def __init__(self, dist):
-        self.dist = dist
-
-    def as_requirement(self):
-        metadata = self.dist.metadata
-        return '%s==%s' % (metadata.name, metadata.version)
-
-    def get_entry_map(self, group):
-        return self.dist.entry_points.get(group, None) or {}
 
 def add_scripts(dist):
     """Create console scripts for the given distribution."""
@@ -63,9 +43,8 @@ def add_scripts(dist):
         def add_output(self, path):
             """Do nothing."""
 
-    fakedist = FakeDistribution(dist)
     easy_install = Neutered_easy_install()
-    easy_install.install_wrapper_scripts(fakedist)
+    easy_install.install_wrapper_scripts(dist)
 
 #
 # Simple, happy routines for writing and updating our own ".pth" file.

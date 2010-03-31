@@ -3,7 +3,7 @@ import os
 import sys
 import pyron.config
 import pyron.dist
-from pyron import install
+import pyron.install
 
 def complain(message):
     """Print the error `message` to standard error."""
@@ -33,27 +33,28 @@ def normalize_project_path(path):
 def cmd_add(paths):
     for path in paths:
         path = normalize_project_path(path)
-        dist = pyron.config.read(path)
-        install.add_scripts(dist)
-        install.add([ path ])
+        dist = pyron.dist.make_distribution(path)
+        pyron.install.add_scripts(dist)
+        pyron.install.add([ dist.location ])
 
 def cmd_remove(things):
-    config_paths = install.pth_load()
+    project_paths = pyron.install.pth_load()
+    dists = [ pyron.dist.make_distribution(p) for p in project_paths ]
     for thing in things:
-        ething = expand_ini_path
-        if thing in config_paths:
-            config_paths.remove(thing)
+        matching_dists = [ d for d in dists if d.project_name == thing ]
+        if matching_dists:
+            project_paths.remove(matching_dists[0].location)
             continue
-        ething = expand_ini_path(thing)
-        if ething in config_paths:
-            config_paths.remove(ething)
+        thing = normalize_project_path(thing)
+        if thing in project_paths:
+            project_paths.remove(thing)
             continue
         complain('not installed: %s' % (thing,))
-    install.pth_save(config_paths)
+    pyron.install.pth_save(project_paths)
 
 def cmd_status():
-    project_paths = install.pth_load()
-    binpath = install.bin_path()
+    project_paths = pyron.install.pth_load()
+    binpath = pyron.install.bin_path()
     for project_path in project_paths:
         print project_path
         dist = pyron.dist.make_distribution(project_path)
