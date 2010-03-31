@@ -16,6 +16,7 @@ its home installtion:
 """
 import os
 import sys
+import setuptools.command.easy_install
 
 def bin_path():
     """Compute where console scripts should be installed."""
@@ -27,24 +28,28 @@ def bin_path():
 # them under Windows and so forth).
 #
 
+class Neutered_easy_install(setuptools.command.easy_install.easy_install):
+    def __init__(self):
+        """Fake a bare-minimum setup of a Command object."""
+        self.dry_run = False
+        self.exclude_scripts = False
+        self.script_dir = bin_path()
+
+    def add_output(self, path):
+        """Do nothing (callback used by install_wrapper_scripts)."""
+
 def add_scripts(dist):
     """Create console scripts for the given distribution."""
-
-    # Only import setuptools when finally necessary
-    import setuptools.command.easy_install
-
-    class Neutered_easy_install(setuptools.command.easy_install.easy_install):
-        def __init__(self):
-            """Fake a bare-minimum setup of a Command object."""
-            self.dry_run = False
-            self.exclude_scripts = False
-            self.script_dir = bin_path()
-
-        def add_output(self, path):
-            """Do nothing."""
-
     easy_install = Neutered_easy_install()
     easy_install.install_wrapper_scripts(dist)
+
+def remove_scripts(dist):
+    """Remove the console scripts of a distribution."""
+    easy_install = Neutered_easy_install()
+    for args in setuptools.command.easy_install.get_script_args(dist):
+        script_name = args[0]
+        target = os.path.join(easy_install.script_dir, script_name)
+        os.unlink(target)
 
 #
 # Simple, happy routines for writing and updating our own ".pth" file.

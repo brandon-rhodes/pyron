@@ -41,15 +41,14 @@ def cmd_remove(things):
     project_paths = pyron.install.pth_load()
     dists = [ pyron.dist.make_distribution(p) for p in project_paths ]
     for thing in things:
-        matching_dists = [ d for d in dists if d.project_name == thing ]
-        if matching_dists:
-            project_paths.remove(matching_dists[0].location)
-            continue
-        thing = normalize_project_path(thing)
-        if thing in project_paths:
-            project_paths.remove(thing)
-            continue
-        complain('not installed: %s' % (thing,))
+        for dist in dists:
+            if (dist.project_name == thing
+                or dist.location == normalize_project_path(thing)):
+                project_paths.remove(dist.location)
+                pyron.install.remove_scripts(dist)
+                break
+        else:
+            complain('not installed: %s' % (thing,))
     pyron.install.pth_save(project_paths)
 
 def cmd_status():
