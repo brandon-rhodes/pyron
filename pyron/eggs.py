@@ -32,7 +32,7 @@ def append_files(z, dirpath, zipdir):
                 f.close()
                 continue
 
-def create_egg(package_name, dir_path):
+def create_egg(package_name, project_path):
     """Return a string containing a zipped egg for the given package."""
 
     f = StringIO()
@@ -63,7 +63,7 @@ def create_egg(package_name, dir_path):
     # Now that we are done with the metadata, save the actual data.
 
     append_namespaces(z, namespace_packages)
-    append_files(z, '.', package_name.replace('.', '/'))
+    append_files(z, project_path, package_name.replace('.', '/'))
 
     # Finish writing the zipfile data.
 
