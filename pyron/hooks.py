@@ -65,7 +65,7 @@ class PyronPackageLoader(object):
         init_path = os.path.join(self.package_dir, '__init__.py')
         f = open(init_path)
         try:
-            m = imp.load_module(fullname, f, self.init_path, ('.py', 'U', 1))
+            m = imp.load_module(fullname, f, init_path, ('.py', 'U', 1))
             m.__path__ = [ self.package_dir ]
             return m
         finally:

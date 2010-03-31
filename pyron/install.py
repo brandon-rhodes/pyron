@@ -99,11 +99,22 @@ def pth_save(paths):
     f.write(TEMPLATE % (uniq_paths,))
     f.close()
 
-def add(paths):
-    """Add a list of paths to the paths already in our ``.pth`` file."""
-    ini_paths = pth_load()
-    ini_paths.extend(paths)
-    pth_save(ini_paths)
+#
+# Routines that do everything to add or remove a distribution.
+#
 
-def remove(p):
-    pass
+def add(dist):
+    """Add a Pyron project to our installation."""
+    project_paths = pth_load()
+    if dist.location in project_paths:
+        raise RuntimeError('already installed: ' + dist.location)
+    project_paths.append(dist.location)
+    add_scripts(dist)
+    pth_save(project_paths)
+
+def remove(dist):
+    """Remove a Pyron project from our installation."""
+    project_paths = pth_load()
+    project_paths.remove(dist.location)
+    remove_scripts(dist)
+    pth_save(project_paths)

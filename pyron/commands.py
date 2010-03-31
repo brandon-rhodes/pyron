@@ -34,8 +34,7 @@ def cmd_add(paths):
     for path in paths:
         path = normalize_project_path(path)
         dist = pyron.dist.make_distribution(path)
-        pyron.install.add_scripts(dist)
-        pyron.install.add([ dist.location ])
+        pyron.install.add(dist)
 
 def cmd_remove(things):
     project_paths = pyron.install.pth_load()
@@ -44,12 +43,10 @@ def cmd_remove(things):
         for dist in dists:
             if (dist.project_name == thing
                 or dist.location == normalize_project_path(thing)):
-                project_paths.remove(dist.location)
-                pyron.install.remove_scripts(dist)
+                pyron.install.remove(dist)
                 break
         else:
             complain('not installed: %s' % (thing,))
-    pyron.install.pth_save(project_paths)
 
 def cmd_status():
     project_paths = pyron.install.pth_load()
