@@ -4,7 +4,7 @@
 from setuptools import setup
 
 setup(name = 'pyron',
-      version = '0.1.1',
+      version = '0.2',
       description = 'The DRY Python package tool',
       license = 'GPL',
       author = 'Brandon Craig Rhodes',
@@ -19,6 +19,7 @@ setup(name = 'pyron',
         'Topic :: Software Development :: Build Tools',
         ],
       packages = [ 'pyron' ],
+      install_requires = [ 'argparse' ],
       entry_points = {
         'console_scripts': [ 'pyron = pyron.commands:main', ],
         }
