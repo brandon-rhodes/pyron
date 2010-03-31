@@ -32,7 +32,7 @@ def append_files(z, dirpath, zipdir):
                 f.close()
                 continue
 
-def create_egg(package_name, project_path):
+def create_egg(project):
     """Return a string containing a zipped egg for the given package."""
 
     f = StringIO()
@@ -40,13 +40,12 @@ def create_egg(package_name, project_path):
 
     # Stuff still needed:
     # requires.txt
-    # entry_points.txt
 
     # Look for periods in the package name to figure out if it is
     # located inside of any namespace packages, and after reducing the
     # name to its top-level component save that as metadata too.
 
-    parent = package_name
+    parent = project.name
     namespace_packages = []
     while '.' in parent:
         parent = parent.rsplit('.', 1)[0]
@@ -56,6 +55,10 @@ def create_egg(package_name, project_path):
                    ''.join(name + '\n' for name in namespace_packages))
     z.writestr('EGG-INFO/top_level.txt', parent + '\n')
 
+    entry_points = project.read_entry_points()
+    if entry_points is not None:
+        z.writestr('EGG-INFO/entry_points.txt', entry_points)
+
     # Enforce best practices by refusing to write zip-safe eggs. :-)
 
     z.writestr('EGG-INFO/not-zip-safe', '\n')
@@ -63,7 +66,7 @@ def create_egg(package_name, project_path):
     # Now that we are done with the metadata, save the actual data.
 
     append_namespaces(z, namespace_packages)
-    append_files(z, project_path, package_name.replace('.', '/'))
+    append_files(z, project.dir, project.name.replace('.', '/'))
 
     # Finish writing the zipfile data.
 

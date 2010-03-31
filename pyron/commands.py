@@ -45,7 +45,7 @@ def cmd_egg(args):
     for path in paths:
         path = normalize_project_path(path)
         project = pyron.project.Project(path)
-        egg_data = pyron.eggs.create_egg(project.name, project.dir)
+        egg_data = pyron.eggs.create_egg(project)
         filename = pyron.eggs.write_egg(project.name, project.version,
                                         sys.version_info, egg_data)
         print 'Wrote:', filename

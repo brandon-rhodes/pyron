@@ -1,7 +1,6 @@
 """Routines for reading various configuration files."""
 
 from ConfigParser import RawConfigParser #, NoOptionError
-from pkg_resources import EntryPoint
 
 def read_pyron_ini(path):
     """Read a project's ``pyron.ini``, returning a ConfigParser."""
@@ -22,12 +21,3 @@ def read_pyron_ini(path):
         raise RuntimeError('missing "name" in [package] section: %s' % (path,))
 
     return config
-
-def read_entry_points_ini(path, dist):
-    """Update a Distribution `dist` with entry points defined in `path`."""
-    f = open(path)
-    try:
-        body = f.read()
-    finally:
-        f.close()
-    dist._ep_map = EntryPoint.parse_map(body, dist)

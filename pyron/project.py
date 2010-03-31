@@ -36,6 +36,18 @@ class Project(object):
         """Return the path to the file `name` in the project directory."""
         return os.path.join(self.dir, name)
 
+    def read_entry_points(self):
+        """Return the text of the ``entry_points.ini`` file, or None."""
+        path = self.file('entry_points.ini')
+        if os.path.exists(path):
+            f = open(path)
+            try:
+                text = f.read()
+            finally:
+                f.close()
+            return text
+        return None
+
     @property
     def prdist(self):
         """Return a `pkg_resources.Distribution` for this project."""
@@ -44,9 +56,9 @@ class Project(object):
             project_name=self.name,
             version=self.version,
             )
-        entry_points_path = self.file('entry_points.ini')
-        if os.path.exists(entry_points_path):
-            pyron.config.read_entry_points_ini(entry_points_path, prdist)
+        text = self.read_entry_points()
+        if text:
+            prdist._ep_map = pkg_resources.EntryPoint.parse_map(text, prdist)
 
         self.__dict__['prdist'] = prdist # cache value
         return prdist
