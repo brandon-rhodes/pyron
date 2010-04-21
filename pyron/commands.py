@@ -52,8 +52,7 @@ def cmd_egg(args):
         path = normalize_project_path(path)
         project = pyron.project.Project(path)
         egg_data = pyron.eggs.create_egg(project)
-        filename = pyron.eggs.write_egg(project.name, project.version,
-                                        sys.version_info, egg_data)
+        filename = pyron.eggs.write_egg(project, sys.version_info, egg_data)
         print 'Wrote:', filename
 
 def cmd_register(args):
@@ -95,6 +94,8 @@ def cmd_status(arg):
         print
 
 def cmd_upload(args):
+    # Drat; the distutils need an actual physical file to upload, so we
+    # have to waste time and energy creating one in a temporary directory.
     paths = args.project
     for path in paths:
         path = normalize_project_path(path)
@@ -102,11 +103,16 @@ def cmd_upload(args):
         sddist = project.sddist
         tmpdir = tempfile.mkdtemp(suffix='pyron')
         try:
-            filepath = pyron.sdist.save_temporary_sdist(project, tmpdir)
-            print filepath
-            raw_input()
-            return
+            egg_data = pyron.eggs.create_egg(project)
+            eggname = pyron.eggs.write_egg(project, sys.version_info,
+                                            egg_data, destdir=tmpdir)
+            eggpath = os.path.join(tmpdir, eggname)
             cmd = UploadCommand(sddist)
+            cmd.initialize_options()
+            cmd.finalize_options()
+            cmd.distribution.dist_files = [
+                ('bdist_egg', sys.version.split()[0], eggpath),
+                ]
             cmd.run()
         finally:
             shutil.rmtree(tmpdir)

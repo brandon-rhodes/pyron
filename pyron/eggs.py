@@ -69,14 +69,14 @@ def create_egg(project):
     z.close()
     return f.getvalue()
 
-def write_egg(name, version, version_info, egg_data):
+def write_egg(project, version_info, egg_data, destdir='.'):
     """Write an egg file, formatting its name per the egg specifications."""
 
     filename = '{0}-{1}-py{2[0]}.{2[1]}.egg'.format(
-        pkg_resources.to_filename(pkg_resources.safe_name(name)),
-        pkg_resources.to_filename(pkg_resources.safe_version(version)),
+        pkg_resources.to_filename(pkg_resources.safe_name(project.name)),
+        pkg_resources.to_filename(pkg_resources.safe_version(project.version)),
         version_info)
-    f = open(filename, 'w')
+    f = open(os.path.join(destdir, filename), 'w')
     try:
         f.write(egg_data)
     finally:
