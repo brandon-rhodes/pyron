@@ -4,15 +4,13 @@ import email.utils
 import os
 import pkg_resources
 import setuptools.dist
+from fnmatch import fnmatch
 
 import pyron.config
 import pyron.readme
 from pyron.introspect import parse_project_init
 
-IGNORE = set(('pyron.ini', 'entry_points.ini'))
-
-def should_ignore(dirpath, name):
-    return name.startswith('.') or (name in IGNORE)
+EXCLUDE_PATTERNS = ('.*', 'pyron.ini', 'entry_points.ini')
 
 class Project(object):
     """Information about a particular Pyron-powered project.
@@ -96,12 +94,24 @@ class Project(object):
         self.__dict__['sddist'] = sddist # cache value
         return sddist
 
+    def should_include(self, filename):
+        """Return whether we should ignore `filename`."""
+        for pattern in EXCLUDE_PATTERNS:
+            if fnmatch(filename, pattern):
+                return False
+        return True
+
     def find_files(self):
         """Yield the (abspath, relpath) to each file in this project."""
         for dirpath, dirnames, filenames in os.walk(self.dir):
+
+            # Prune directories that we should ignore.
             for n in range(len(dirnames) - 1, -1, -1):
-                if should_ignore(dirpath, dirnames[n]):
+                if not self.should_include(dirnames[n]):
                     del dirnames[n]
+
+            # Include appropriate files.
             for filename in filenames:
-                if not should_ignore(dirpath, filename):
-                    yield os.path.join(dirpath, filename)
+                if self.should_include(filename):
+                    filepath = os.path.join(dirpath, filename)
+                    yield filepath, os.path.relpath(filepath, self.dir)
