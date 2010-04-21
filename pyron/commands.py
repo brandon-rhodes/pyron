@@ -38,6 +38,7 @@ def cmd_add(args):
     for path in paths:
         path = normalize_project_path(path)
         dist = pyron.project.Project(path).prdist
+        # WorkingSet.resolv(requirements, installer=?) to download them
         pyron.install.add(dist)
 
 def cmd_egg(args):

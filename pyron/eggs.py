@@ -38,9 +38,6 @@ def create_egg(project):
     f = StringIO()
     z = ZipFile(f, 'w')
 
-    # Stuff still needed:
-    # requires.txt
-
     # Look for periods in the package name to figure out if it is
     # located inside of any namespace packages, and after reducing the
     # name to its top-level component save that as metadata too.
@@ -55,8 +52,8 @@ def create_egg(project):
                    ''.join(name + '\n' for name in namespace_packages))
     z.writestr('EGG-INFO/top_level.txt', parent + '\n')
 
-    if project.requires:
-        z.writestr('EGG-INFO/requires.txt', '\n'.join(project.requires))
+    if project.requirements:
+        z.writestr('EGG-INFO/requires.txt', '\n'.join(project.requirements))
 
     entry_points = project.read_entry_points()
     if entry_points is not None:

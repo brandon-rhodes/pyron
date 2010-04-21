@@ -32,9 +32,9 @@ class Project(object):
         self.name = self.config.get('package', 'name')
         self.version = self.consts['__version__']
         if self.config.has_option('package', 'requires'):
-            self.requires = self.config.get('package', 'requires').split()
+            self.requirements = self.config.get('package', 'requires').split()
         else:
-            self.requires = []
+            self.requirements = []
 
     def file(self, name):
         """Return the path to the file `name` in the project directory."""
