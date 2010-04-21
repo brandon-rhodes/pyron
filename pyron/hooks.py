@@ -1,6 +1,6 @@
 """The Pyron import hook.
 
-Every a Pyron-powered Python installation starts up, the
+Every time a Pyron-powered Python installation starts up, the
 ``pyron-packages.pth`` file that Pyron has placed in ``site-packages``
 invokes the `install_import_hook()` method given below.  This method has
 three tasks:
