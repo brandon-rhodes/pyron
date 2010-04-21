@@ -9,6 +9,11 @@ import pyron.config
 import pyron.readme
 from pyron.introspect import parse_project_init
 
+IGNORE = set(('pyron.ini', 'entry_points.ini'))
+
+def should_ignore(dirpath, name):
+    return name.startswith('.') or (name in IGNORE)
+
 class Project(object):
     """Information about a particular Pyron-powered project.
 
@@ -78,7 +83,8 @@ class Project(object):
         sddist.metadata.author, sddist.metadata.author_email \
             = email.utils.parseaddr(author)
         if not sddist.metadata.author:
-            die('the "author" defined in your "pyron.ini" must include both'
+            raise RuntimeError(
+                'the "author" defined in your "pyron.ini" must include both'
                 ' a name and an email address, like "Ed <ed@example.com>"')
 
         sddist.metadata.url = self.config.get('package', 'url')
@@ -89,3 +95,13 @@ class Project(object):
 
         self.__dict__['sddist'] = sddist # cache value
         return sddist
+
+    def find_files(self):
+        """Yield the (abspath, relpath) to each file in this project."""
+        for dirpath, dirnames, filenames in os.walk(self.dir):
+            for n in range(len(dirnames) - 1, -1, -1):
+                if should_ignore(dirpath, dirnames[n]):
+                    del dirnames[n]
+            for filename in filenames:
+                if not should_ignore(dirpath, filename):
+                    yield os.path.join(dirpath, filename)

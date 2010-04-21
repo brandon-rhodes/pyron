@@ -1,12 +1,17 @@
 """The Pyron command-line tool."""
 import argparse
 import os
+import shutil
 import sys
+import tempfile
+from distutils.command.register import register as RegisterCommand
+from distutils.command.upload import upload as UploadCommand
 
 import pyron.config
 import pyron.eggs
 import pyron.install
 import pyron.project
+#import pyron.sdist
 
 def complain(message):
     """Print the error `message` to standard error."""
@@ -51,8 +56,6 @@ def cmd_egg(args):
                                         sys.version_info, egg_data)
         print 'Wrote:', filename
 
-from distutils.command.register import register as RegisterCommand
-
 def cmd_register(args):
     paths = args.project
     for path in paths:
@@ -91,6 +94,23 @@ def cmd_status(arg):
                 print '        ERROR: SCRIPT MISSING'
         print
 
+def cmd_upload(args):
+    paths = args.project
+    for path in paths:
+        path = normalize_project_path(path)
+        project = pyron.project.Project(path)
+        sddist = project.sddist
+        tmpdir = tempfile.mkdtemp(suffix='pyron')
+        try:
+            filepath = pyron.sdist.save_temporary_sdist(project, tmpdir)
+            print filepath
+            raw_input()
+            return
+            cmd = UploadCommand(sddist)
+            cmd.run()
+        finally:
+            shutil.rmtree(tmpdir)
+
 def main():
     parser = argparse.ArgumentParser(prog='pyron')
     subparsers = parser.add_subparsers(title='Argument', metavar='COMMAND')
@@ -120,6 +140,11 @@ def main():
 
     p = sap('status', help='List the currently active projects ("st")')
     p.set_defaults(func=cmd_status)
+
+    p = sap('upload', help='Upload an egg of your project to PyPI')
+    p.add_argument('project', default='.', nargs='*',
+                   help='Pyron project path (defaults to current directory)')
+    p.set_defaults(func=cmd_upload)
 
     # Rename ugly "optional arguments" titles.
 

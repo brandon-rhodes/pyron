@@ -6,7 +6,7 @@ from fnmatch import fnmatch
 from StringIO import StringIO
 from zipfile import ZipFile #, ZipInfo
 
-INCLUDE_PATTERNS = ('*.py', '*.rst', '*.txt')
+EXCLUDE_PATTERNS = ('.*', 'pyron.ini', 'entry_points.ini')
 NAMESPACE_INIT = ('from pkgutil import extend_path\n'
                   '__path__ = extend_path(__path__, __name__)\n')
 
@@ -18,19 +18,16 @@ def append_namespaces(z, namespace_packages):
 def append_files(z, dirpath, zipdir):
     """Append to the zipfile any files found in the given directory."""
     for filename in sorted(os.listdir(dirpath)):
-        if filename.startswith('.'):
+        if any( fnmatch(filename, pattern) for pattern in EXCLUDE_PATTERNS ):
             continue
         filepath = os.path.join(dirpath, filename)
         zippath = (zipdir + '/' + filename) if zipdir else filename
         if os.path.isdir(filepath):
             append_files(z, filepath, zippath)
             continue
-        for pattern in INCLUDE_PATTERNS:
-            if fnmatch(filename, pattern):
-                f = open(filepath)
-                z.writestr(zippath, f.read())
-                f.close()
-                continue
+        f = open(filepath)
+        z.writestr(zippath, f.read())
+        f.close()
 
 def create_egg(project):
     """Return a string containing a zipped egg for the given package."""
