@@ -3,18 +3,35 @@
 import os
 import tarfile
 
-# NOTE: this module is incomplete; it represents only the first halting
-# steps to create the ability to write sdist archives from Pyron, work
-# which stalled when I realized how hard it was going to be to write all
-# of the little rules to try to induce a "setup.py" file to install
-# exactly the right combination of Python files, other files, and entry
-# points for a particular project.
+namespace_init_path = os.path.join(os.path.dirname(__file__),
+                                   'namespace_init.py.txt')
+
+def package_dir(name):
+    """Return the tarfile directory name for a given package."""
+    return '/'.join(name.split('.'))
 
 def write_sdist(project, outfile):
     """Write a tarfile sdist for `project` to the stream `outfile`."""
+    def add_dir(arcname):
+        """Add a generic, featureless directory to the archive."""
+        tar.add(project.dir, arcname, recursive=False)
+
     tar = tarfile.open(mode='w:gz', fileobj=outfile)
-    for path in project.find_files():
-        print path, os.path.relpath(path, project.dir)
+    base = '%s-%s' % (project.name, project.version)
+    src = os.path.join(base, 'src')
+
+    add_dir(base)
+    add_dir(src)
+    for np in project.namespace_packages:
+        dirname = '/'.join([ src, package_dir(np) ])
+        add_dir(dirname)
+        tar.add(namespace_init_path, '/'.join([ dirname, '__init__.py' ]))
+
+    dirname = '/'.join([ src, package_dir(project.name) ])
+    add_dir(dirname)
+    for abspath, relpath in project.find_files():
+        tar.add(abspath,
+                '/'.join([ dirname, relpath ]))
     tar.close()
 
 def save_temporary_sdist(project, tmpdir):

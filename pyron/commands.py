@@ -11,7 +11,7 @@ import pyron.config
 import pyron.eggs
 import pyron.install
 import pyron.project
-#import pyron.sdist
+import pyron.sdist
 
 def complain(message):
     """Print the error `message` to standard error."""
@@ -103,10 +103,9 @@ def cmd_upload(args):
         sddist = project.sddist
         tmpdir = tempfile.mkdtemp(suffix='pyron')
         try:
-            egg_data = pyron.eggs.create_egg(project)
-            eggname = pyron.eggs.write_egg(project, sys.version_info,
-                                            egg_data, destdir=tmpdir)
-            eggpath = os.path.join(tmpdir, eggname)
+            print pyron.sdist.save_temporary_sdist(project, tmpdir)
+            raw_input()
+            return
             cmd = UploadCommand(sddist)
             cmd.initialize_options()
             cmd.finalize_options()

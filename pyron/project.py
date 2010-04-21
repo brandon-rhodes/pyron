@@ -10,7 +10,7 @@ import pyron.config
 import pyron.readme
 from pyron.introspect import parse_project_init
 
-EXCLUDE_PATTERNS = ('.*', 'pyron.ini', 'entry_points.ini')
+EXCLUDE_PATTERNS = ('.*', '*.pyc', '*.pyo', 'pyron.ini', 'entry_points.ini')
 
 class Project(object):
     """Information about a particular Pyron-powered project.
@@ -32,7 +32,14 @@ class Project(object):
         self.dir = project_dir
         self.config = pyron.config.read_pyron_ini(self.file('pyron.ini'))
         self.consts = parse_project_init(self.file('__init__.py'))
-        self.name = self.config.get('package', 'name')
+
+        self.namespace_packages = []
+        self.name = s = self.config.get('package', 'name')
+        while '.' in s:
+            s = s.rsplit('.', 1)[0]
+            self.namespace_packages[0:0] = [ s ]  # prepend
+        self.top_level = s
+
         self.version = self.consts['__version__']
         if self.config.has_option('package', 'requires'):
             self.requirements = self.config.get('package', 'requires').split()

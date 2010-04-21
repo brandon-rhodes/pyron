@@ -38,15 +38,13 @@ def create_egg(project):
     # located inside of any namespace packages, and after reducing the
     # name to its top-level component save that as metadata too.
 
-    parent = project.name
-    namespace_packages = []
-    while '.' in parent:
-        parent = parent.rsplit('.', 1)[0]
-        namespace_packages.append(parent)
-    if namespace_packages:
-        z.writestr('EGG-INFO/namespace_packages.txt',
-                   ''.join(name + '\n' for name in namespace_packages))
-    z.writestr('EGG-INFO/top_level.txt', parent + '\n')
+    if project.namespace_packages:
+        z.writestr(
+            'EGG-INFO/namespace_packages.txt',
+            ''.join(name + '\n' for name in project.namespace_packages),
+            )
+
+    z.writestr('EGG-INFO/top_level.txt', project.top_level + '\n')
 
     if project.requirements:
         z.writestr('EGG-INFO/requires.txt', '\n'.join(project.requirements))
@@ -61,7 +59,7 @@ def create_egg(project):
 
     # Now that we are done with the metadata, save the actual data.
 
-    append_namespaces(z, namespace_packages)
+    append_namespaces(z, project.namespace_packages)
     append_files(z, project, project.name.replace('.', '/'))
 
     # Finish writing the zipfile data.
