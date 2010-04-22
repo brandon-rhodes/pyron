@@ -105,14 +105,12 @@ def cmd_upload(args):
 
         tmpdir = tempfile.mkdtemp(prefix='pyron-', suffix='-upload')
         try:
-            print pyron.sdist.save_temporary_sdist(project, tmpdir)
-            raw_input()
-            return
+            sdist_path = pyron.sdist.save_temporary_sdist(project, tmpdir)
             cmd = UploadCommand(sddist)
             cmd.initialize_options()
             cmd.finalize_options()
             cmd.distribution.dist_files = [
-                ('bdist_egg', sys.version.split()[0], eggpath),
+                ('sdist', '', sdist_path),#sys.version.split()[0], eggpath),
                 ]
             cmd.run()
         finally:
