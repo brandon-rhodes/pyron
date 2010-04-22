@@ -11,24 +11,17 @@ def package_dir(name):
     return '/'.join(name.split('.'))
 
 def write_sdist(project, outfile):
-    """Write a tarfile sdist for `project` to the stream `outfile`."""
-    def add_dir(arcname):
-        """Add a generic, featureless directory to the archive."""
-        tar.add(project.dir, arcname, recursive=False)
+    """Write a gzipped tarfile sdist for `project` to `outfile`."""
 
     tar = tarfile.open(mode='w:gz', fileobj=outfile)
     base = '%s-%s' % (project.name, project.version)
     src = os.path.join(base, 'src')
 
-    add_dir(base)
-    add_dir(src)
     for np in project.namespace_packages:
         dirname = '/'.join([ src, package_dir(np) ])
-        add_dir(dirname)
         tar.add(namespace_init_path, '/'.join([ dirname, '__init__.py' ]))
 
     dirname = '/'.join([ src, package_dir(project.name) ])
-    add_dir(dirname)
     for abspath, relpath in project.find_files():
         tar.add(abspath,
                 '/'.join([ dirname, relpath ]))
