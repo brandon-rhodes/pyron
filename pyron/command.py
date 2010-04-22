@@ -116,7 +116,10 @@ def cmd_upload(args):
         finally:
             shutil.rmtree(tmpdir)
 
-def main():
+def main(argv=None):
+    if argv is None:
+        argv = sys.argv[1:]
+
     parser = argparse.ArgumentParser(prog='pyron')
     subparsers = parser.add_subparsers(title='Argument', metavar='COMMAND')
     sap = subparsers.add_parser
@@ -161,7 +164,7 @@ def main():
     subparsers.choices['st'] = subparsers.choices['status']
     subparsers.choices['rm'] = subparsers.choices['remove']
 
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
     try:
         return args.func(args)
     except RuntimeError, e:

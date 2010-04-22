@@ -1,6 +1,7 @@
 """Routines to parse an ``__init__.py`` for version and author information."""
 
 import _ast, sys
+from pyron.exceptions import PyronError
 
 def die(message):
     sys.stderr.write('pyron: ' + message + '\n')
@@ -23,7 +24,10 @@ def interpret(node):
 
 def parse_project_init(init_path):
     """Parse a package-wide __init__.py module for information."""
-    f = open(init_path)
+    try:
+        f = open(init_path)
+    except IOError, e:
+        raise PyronError('cannot open %s: %s' % (init_path, e.strerror))
     code = f.read()
     f.close()
 
