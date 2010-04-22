@@ -97,10 +97,11 @@ def write_sdist(project, outfile):
         pathparts = pkgdir + os.path.split(relpath)
         tar_add(tar, pathparts, text, now)
 
-    # Finally, add a setup.py file.
+    # Finally, add a setup.py file and a MANIFEST.in file.
 
     text = setup_py_text(project)
     tar_add(tar, [ base, 'setup.py' ], text, now)
+    tar_add(tar, [ base, 'MANIFEST.in'], 'recursive-include src *\n', now)
 
     tar.close()
 
