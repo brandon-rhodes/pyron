@@ -66,22 +66,28 @@ def write_sdist(project, outfile):
     tar = tarfile.open(mode='w:gz', fileobj=outfile)
     now = time.time()
     base = '%s-%s' % (project.name, project.version)
-    src = os.path.join(base, 'src')
+    src = [ base, 'src' ]
+
+    # Build the __init__.py files for any namespace packages.
 
     for np in project.namespace_packages:
-        #tarpath = '/'.join([ src, package_dir(np), '__init__.py' ])
-        #tar.add(namespace_init_path, tarpath)
-        pathparts = [ base, 'src' ] + np.split('.') + [ '__init__.py' ]
+        pathparts = src + np.split('.') + [ '__init__.py' ]
         tar_add(tar, pathparts, NAMESPACE_INIT_PY, now)
 
-    pkgbase = '/'.join([ src, package_dir(project.name) ])
-    for abspath, relpath in project.find_files():
-        tar.add(abspath, '/'.join([ pkgbase, relpath ]))
+    # Copy source code, and any other files, from the project.
 
-    #text = setup_py_text(project)
-    #tarinfo = tar.gettarinfo(setup_py_path, '/'.join([ base, 'setup.py' ]))
-    #tarinfo.size = len(text)
-    #tar.addfile(tarinfo, StringIO(text))
+    pkgdir = tuple(src + project.name.split('.'))
+    for abspath, relpath in project.find_files():
+        f = open(abspath, 'rb')
+        text = f.read()
+        f.close()
+        pathparts = pkgdir + os.path.split(relpath)
+        tar_add(tar, pathparts, text, now)
+
+    # Finally, add a setup.py file.
+
+    text = setup_py_text(project)
+    tar_add(tar, [ base, 'setup.py' ], text, now)
 
     tar.close()
 
