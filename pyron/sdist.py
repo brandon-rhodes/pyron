@@ -22,19 +22,27 @@ from distribute import setup
 
 setup(
     name = %r,
-    
+    version = %r,
+    description = %r,
+    long_description = %r,
+    license = 'LGPL',
+    author = %r,
+    author_email = %r,
+    url = %r,
+    classifiers = [],
     )
 """
 
 def setup_py_text(project):
     """Return the text of a ``setup.py`` file for `project`."""
-    # setup.py needs:
-    # to know about the package
-    # to know name, version, description, long description
     # requirements
     # entry points
-    # author
-    return SETUP_PY % (project.name, )
+    p, description, long_description = project.read_readme()
+    project.parse_author()
+    project.parse_url()
+    return SETUP_PY % (project.name, project.version,
+                       description, long_description,
+                       project.author, project.author_email, project.url)
 
 def package_dir(name):
     """Return the tarfile directory name for a given package."""

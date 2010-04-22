@@ -46,6 +46,21 @@ class Project(object):
         else:
             self.requirements = []
 
+    # Author and author email are parsed from the same field.
+
+    def parse_author(self):
+        field = self.config.get('package', 'author')
+        self.author, self.author_email = email.utils.parseaddr(field)
+        if not self.author:
+            raise RuntimeError(
+                'the "author" defined in your "pyron.ini" must include both'
+                ' a name and an email address, like "Ed <ed@example.com>"')
+
+    def parse_url(self):
+        self.url = self.config.get('package', 'url')
+
+    # Routines to find and read project files.
+
     def file(self, name):
         """Return the path to the file `name` in the project directory."""
         return os.path.join(self.dir, name)
@@ -61,6 +76,12 @@ class Project(object):
                 f.close()
             return text
         return None
+
+    def read_readme(self):
+        readme_path = pyron.readme.find_readme(self.dir)
+        return pyron.readme.inspect_readme(readme_path)
+
+    # Routines to marshal our data into other data structures.
 
     @property
     def prdist(self):
@@ -84,19 +105,15 @@ class Project(object):
         sddist.metadata.name = self.name
         sddist.metadata.version = self.version
 
-        author = self.config.get('package', 'author')
-        sddist.metadata.author, sddist.metadata.author_email \
-            = email.utils.parseaddr(author)
-        if not sddist.metadata.author:
-            raise RuntimeError(
-                'the "author" defined in your "pyron.ini" must include both'
-                ' a name and an email address, like "Ed <ed@example.com>"')
+        self.parse_author()
+        sddist.metadata.author = self.author
+        sddist.metadata.author_email = self.author_email
 
-        sddist.metadata.url = self.config.get('package', 'url')
+        self.parse_url()
+        sddist.metadata.url = self.url
 
-        readme_path = pyron.readme.find_readme(self.dir)
         p, sddist.metadata.description, sddist.metadata.long_description \
-            = pyron.readme.inspect_readme(readme_path)
+            = self.read_readme()
 
         self.__dict__['sddist'] = sddist # cache value
         return sddist
