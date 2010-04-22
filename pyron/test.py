@@ -5,7 +5,7 @@ import os
 import unittest
 import tempfile
 
-import pyron.commands
+import pyron.command
 from pyron.exceptions import PyronError
 
 class SampleProject(object):
@@ -34,7 +34,7 @@ class SampleProject(object):
     def pyron(self, *args):
         args = list(args)
         args.append(self.projectdir)
-        pyron.commands.run(args)
+        pyron.command.run(args)
 
     def assertError(self, pattern, *args):
         try:
