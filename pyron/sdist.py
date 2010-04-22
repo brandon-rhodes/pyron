@@ -18,7 +18,7 @@ SETUP_PY = """\
 # This setup.py was generated automatically by Pyron.
 # For details, see http://pypi.python.org/pypi/pyron/
 
-from distribute import setup
+from setuptools import setup, find_packages
 
 setup(
     name = %r,
@@ -29,20 +29,25 @@ setup(
     author_email = %r,
     url = %r,
     classifiers = %r,
+
+    package_dir = {'': 'src'},
+    packages = find_packages('src'),
+    include_package_data = True,
+    install_requires = %r,
+    entry_points = %r,
     )
 """
 
 def setup_py_text(project):
     """Return the text of a ``setup.py`` file for `project`."""
-    # requirements
-    # entry points
     p, description, long_description = project.read_readme()
     project.parse_author()
     project.parse_url()
-    return SETUP_PY % (project.name, project.version,
-                       description, long_description,
-                       project.author, project.author_email, project.url,
-                       project.classifiers)
+    return SETUP_PY % (
+        project.name, project.version, description, long_description,
+        project.author, project.author_email,
+        project.url, project.classifiers,
+        project.requirements, project.read_entry_points() or '')
 
 def package_dir(name):
     """Return the tarfile directory name for a given package."""

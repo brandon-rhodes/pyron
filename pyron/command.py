@@ -102,7 +102,8 @@ def cmd_upload(args):
         path = normalize_project_path(path)
         project = pyron.project.Project(path)
         sddist = project.sddist
-        tmpdir = tempfile.mkdtemp(suffix='pyron')
+
+        tmpdir = tempfile.mkdtemp(prefix='pyron-', suffix='-upload')
         try:
             print pyron.sdist.save_temporary_sdist(project, tmpdir)
             raw_input()
