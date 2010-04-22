@@ -21,6 +21,6 @@ setup(name = 'pyron',
       packages = [ 'pyron' ],
       install_requires = [ 'argparse' ],
       entry_points = {
-        'console_scripts': [ 'pyron = pyron.commands:main', ],
+        'console_scripts': [ 'pyron = pyron.command:main', ],
         }
       )

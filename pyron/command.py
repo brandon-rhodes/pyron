@@ -12,6 +12,7 @@ import pyron.eggs
 import pyron.install
 import pyron.project
 import pyron.sdist
+from pyron.exceptions import PyronError
 
 def complain(message):
     """Print the error `message` to standard error."""
@@ -116,10 +117,14 @@ def cmd_upload(args):
         finally:
             shutil.rmtree(tmpdir)
 
-def main(argv=None):
-    if argv is None:
-        argv = sys.argv[1:]
+def run(argv):
+    """The Pyron main program logic, which runs with the given `argv`.
 
+    Within both this function and all its subsidiary Pyron functions, a
+    PyronError is raised if a failure occurs which needs to be reported
+    to the user.
+
+    """
     parser = argparse.ArgumentParser(prog='pyron')
     subparsers = parser.add_subparsers(title='Argument', metavar='COMMAND')
     sap = subparsers.add_parser
@@ -165,7 +170,18 @@ def main(argv=None):
     subparsers.choices['rm'] = subparsers.choices['remove']
 
     args = parser.parse_args(argv)
+    return args.func(args)
+
+def main():
+    """Run the Pyron main program with the arguments in `sys.argv`.
+
+    If `PyronError` is raised, its message is printed to stderr and we
+    then exit with a nonzero error code.
+
+    """
     try:
-        return args.func(args)
-    except RuntimeError, e:
-        die(str(e))
+        run(sys.argv[1:])
+    except PyronError, e:
+        sys.stdout.write('Error: %s\n' % e)
+        sys.stdout.flush()
+        exit(e.error_code)
