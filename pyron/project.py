@@ -112,6 +112,9 @@ class Project(object):
         sddist.metadata.name = self.name
         sddist.metadata.version = self.version
 
+        p, sddist.metadata.description, sddist.metadata.long_description \
+            = self.read_readme()
+
         self.parse_author()
         sddist.metadata.author = self.author
         sddist.metadata.author_email = self.author_email
@@ -119,8 +122,7 @@ class Project(object):
         self.parse_url()
         sddist.metadata.url = self.url
 
-        p, sddist.metadata.description, sddist.metadata.long_description \
-            = self.read_readme()
+        sddist.metadata.classifiers = self.classifiers
 
         self.__dict__['sddist'] = sddist # cache value
         return sddist
