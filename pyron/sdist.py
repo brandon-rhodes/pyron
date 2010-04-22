@@ -25,11 +25,10 @@ setup(
     version = %r,
     description = %r,
     long_description = %r,
-    license = 'LGPL',
     author = %r,
     author_email = %r,
     url = %r,
-    classifiers = [],
+    classifiers = %r,
     )
 """
 
@@ -42,7 +41,8 @@ def setup_py_text(project):
     project.parse_url()
     return SETUP_PY % (project.name, project.version,
                        description, long_description,
-                       project.author, project.author_email, project.url)
+                       project.author, project.author_email, project.url,
+                       project.classifiers)
 
 def package_dir(name):
     """Return the tarfile directory name for a given package."""

@@ -46,6 +46,13 @@ class Project(object):
         else:
             self.requirements = []
 
+        if self.config.has_option('package', 'classifiers'):
+            lines = self.config.get('package', 'classifiers').split('\n')
+            lines = [ line.strip() for line in lines ]
+            self.classifiers = [ line for line in lines if line ]
+        else:
+            self.classifiers = []
+
     # Author and author email are parsed from the same field.
 
     def parse_author(self):
