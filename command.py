@@ -133,13 +133,16 @@ def run(argv):
         sys.stderr.write('Type "pyron help" for usage.\n')
         return 2
 
-    parser = argparse.ArgumentParser(prog='pyron')
+    parser = argparse.ArgumentParser(prog='pyron', add_help=False)
     subparsers = parser.add_subparsers(title='Argument', metavar='COMMAND')
-    sap = subparsers.add_parser
+
+    def sap(*args, **kw):
+        kw['add_help'] = False
+        return subparsers.add_parser(*args, **kw)
 
     def cmd_help(args):
         if args.command:
-            return run([ args.command,  '-h' ])
+            subparsers.choices[args.command].print_help()
         else:
             parser.print_help()
 
