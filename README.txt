@@ -26,8 +26,8 @@ Install the Pyron package there.
 
 Two packages that are currently developed using Pyron, and that we can
 use here as samples, are the ``cursive`` tools that you might have seen
-on the Python Package Index.  You can check out their development trees
-very simply, using Mercurial::
+on the `Python Package Index`_.  You can check out their development
+trees very simply, using Mercurial::
 
     (dev)$ hg clone http://bitbucket.org/brandon/cursivepymag
     (dev)$ hg clone http://bitbucket.org/brandon/cursivetools
@@ -176,7 +176,53 @@ directory, or using the package name itself::
     (dev)$ bin/cursive
     zsh: no such file or directory: bin/cursive
 
+This makes it easy to quickly adapt the mix of active development
+packages and versions as you write and test your code.
 
+Deploying Packages
+------------------
+
+Sharing a Python package with other people typically has two steps: you
+need to first *register* the package on the `Python Package Index`_ so
+that its name, description, and other metadata shows up, and then you
+need to provide a ``.tar.gz`` file that other people can download and
+install using ``pip`` or ``easy_install``.  These two steps are quite
+easy to accomplish using Pyron::
+
+    (dev)$ pyron register cursivetools
+    (dev)$ pyron upload cursivetools
+
+With both of these sub-commands, and in fact with most Pyron commands,
+you should follow the command with the names of one or more directories
+where a Pyron-powered development package lives.  If you provide no
+directory name, then the current directory is searched, so the two
+commands above could also have been written::
+
+    (dev)$ cd cursivetools
+    (dev)$ pyron register
+    (dev)$ pyron upload
+    (dev)$ cd ..
+
+Note that when the "upload" builds the ``.tar.gz`` distribution, it will
+include every file in the development package that does not being with a
+period (since an initial period "." is how files and directories are
+"hidden" from normal view on a Unix system).  Before you "upload", you
+should therefore make sure that no temporary data or other unnecessary
+files are sitting inside of the development package's directory.  The
+exact rule is that Pyron::
+
+* Ignores hidden files that begin with a period.
+* Ignores files whose names end with ``.pyc`` and ``.pyo``.
+* Does not include ``pyron.ini`` in the distribution.
+* Does not include ``entry_points.ini`` in the distribution.
+
+Note that Pyron has *no* provision for building, or distributing,
+C-language extensions or shared libraries or other binary code that has
+to be compiled.  If your package needs to be compiled to operate, then
+you should use the normal ``setup.py`` mechanism; that's what it's good
+for: situations that are already complicated, where you need lots of
+control over a difficult build process.  Pyron, by constrast, is
+intended only for distributing Python-only packages.
 
 TODO
 ----
@@ -185,6 +231,8 @@ Before releasing this package, I should:
 
 * Get that .txt file appearing in the release .tar.gz.
 * Arrange it so that dependencies of development packages get installed.
+* Turn off the egg command.
 
 
-.. _virtualenv: pypi.python.org/pypi/virtualenv
+.. _virtualenv: http://pypi.python.org/pypi/virtualenv/
+.. _Python Package Index: http://pypi.python.org/pypi/
