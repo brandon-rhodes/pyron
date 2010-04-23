@@ -83,7 +83,6 @@ def cmd_sdist(args):
     for path in paths:
         path = normalize_project_path(path)
         project = pyron.project.Project(path)
-        sddist = project.sddist
         print pyron.sdist.save_sdist(project, '.')
 
 def cmd_status(arg):
@@ -117,9 +116,7 @@ def cmd_upload(args):
             cmd = UploadCommand(sddist)
             cmd.initialize_options()
             cmd.finalize_options()
-            cmd.distribution.dist_files = [
-                ('sdist', '', sdist_path),#sys.version.split()[0], eggpath),
-                ]
+            cmd.distribution.dist_files = [ ('sdist', '', sdist_path) ]
             cmd.run()
         finally:
             shutil.rmtree(tmpdir)
@@ -132,9 +129,19 @@ def run(argv):
     to the user.
 
     """
+    if not argv:
+        sys.stderr.write('Type "pyron help" for usage.\n')
+        return 2
+
     parser = argparse.ArgumentParser(prog='pyron')
     subparsers = parser.add_subparsers(title='Argument', metavar='COMMAND')
     sap = subparsers.add_parser
+
+    def cmd_help(args):
+        if args.command:
+            return run([ args.command,  '-h' ])
+        else:
+            parser.print_help()
 
     # More commands to add: egg, register
 
@@ -142,6 +149,11 @@ def run(argv):
     p.add_argument('project', default='.', nargs='*',
                    help='Pyron project path (defaults to current directory)')
     p.set_defaults(func=cmd_add)
+
+    p = sap('help', help='Show this usage message')
+    p.add_argument('command', default=None, nargs='?',
+                   help='Pyron command you want help with')
+    p.set_defaults(func=cmd_help)
 
     #p = sap('egg', help='Build an egg for distribution')
     #p.add_argument('project', default='.', nargs='+',
@@ -188,11 +200,11 @@ def main():
     """Run the Pyron main program with the arguments in `sys.argv`.
 
     If `PyronError` is raised, its message is printed to stderr and we
-    then exit with a nonzero error code.
+    then exit with the error code included in the exception.
 
     """
     try:
-        run(sys.argv[1:])
+        sys.exit(run(sys.argv[1:]))
     except PyronError, e:
         sys.stdout.write('Error: %s\n' % e)
         sys.stdout.flush()
