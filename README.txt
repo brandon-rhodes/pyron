@@ -12,17 +12,22 @@ Developing with Pyron
 ---------------------
 
 To see Pyron in action, install Ian Bicking's virtualenv_ tool and
-create a virtual environment to serve as your development environment::
+create a virtual environment to serve as your development environment.
+Install the Pyron package there.
 
     $ virtualenv dev
     $ cd dev
     $ source bin/activate
     (dev)$ ls
     bin/  include/  lib/
+    (dev)$ pip install pyron
+    ...
+    Successfully installed argparse pyron
 
-Two packages that are currently developed using Pyron are the
-``cursive`` tools that you might have seen on the Python Package Index.
-You can check out their development trees very simply, using Mercurial::
+Two packages that are currently developed using Pyron, and that we can
+use here as samples, are the ``cursive`` tools that you might have seen
+on the Python Package Index.  You can check out their development trees
+very simply, using Mercurial::
 
     (dev)$ hg clone http://bitbucket.org/brandon/cursivepymag
     (dev)$ hg clone http://bitbucket.org/brandon/cursivetools
@@ -57,7 +62,7 @@ same version number it two different places. ::
 The description that is placed on the Python Package Index for this
 package will be copied verbatim from ``README.txt``, which should start
 with a title that can be used for the short summary description on the
-Index::
+Package Index::
 
     (dev)$ cat cursivetools/README.txt
     
@@ -76,169 +81,110 @@ information in several places.
 Activating Development Packages
 -------------------------------
 
-When developing a package, you need more than simply having files
-present on your hard drive: you need them
+When developing a package, you not only need its files on your hard
+drive, but you need for Python itself to be able to see the package.
+This involves three things:
+
+* Python should be able to import the package.
+* The package's entry points should be available.
+* Any console scripts the package declares should be installed.
+
+None of these three things are true yet of the development packages in
+our example, because Python cannot yet see them.
+
+    (dev)$ python -c 'import cursive.tools'
+    Traceback (most recent call last):
+      ...
+    ImportError: No module named cursive.tools
+
+To make the development copy of this package "appear" in our virtual
+environment, we have to use the Pyron command-line tool to activate it.
+You can use the Pyron "status" (abbreviated "st") command to see which
+development packages are currently active in the virtual environment,
+and the "add" command to activate further projects::
+
+    (dev)$ pyron status
+    No packages are under development in this environment.
+    (dev)$ pyron add cursivetools 
+    (dev)$ pyron status
+    /home/brandon/dev/cursivetools
+        Package: cursive.tools
+        Console-script: cursive (cursive.tools.cursive:console_script_cursive)
+
+As you can see from the "status" command, the ``cursive.tools`` package
+is now under active development.  This means that Python will now be
+able to import it!  You can verify that Python loads the package
+directly from its development directory::
+
+    (dev)$ python
+    >>> import cursive.tools
+    >>> cursive.tools.__file__
+    '/home/brandon/dev/cursivetools/__init__.py'
+    >>> exit()
+
+And the console script declared by ``cursive.tools`` is now available in
+the virtual environment as well.
+
+    (dev)$ bin/cursive
+    Usage: cursive [options] <command> [options]
+    ...
+    Available Commands:
+
+     wc - Word count
+
+The above output shows both that the ``cursive.tools`` package is fully
+up and running, and also that its one built-in entry point, that defines
+the "wc" sub-command, is active as well.  To see another entry point
+activate, we can add the other ``cursive.pymag`` package we downloaded
+to this virtual environment as well::
+
+    (dev)$ pyron add cursivepymag
+    (dev)$ pyron st
+    /home/brandon/dev/cursivetools
+        Package: cursive.tools
+            Console-script: cursive (cursive.tools.cursive:console_script_cursive)
+
+    /home/brandon/dev/cursivepymag
+        Package: cursive.pymag
+
+    (dev)$ bin/cursive
+    Usage: cursive [options] <command> [options]
+    ...
+    Available Commands:
+
+     pymag - Convert an RST document to Python Magazine Ceres markup
+     wc    - Word count
+
+You can see that a second sub-command, "pymag", is available because the
+``cursive.pymag`` package declares an entry point for it.  Activating a
+development project with Pyron has all of the old advantages of running
+a ``setup.py`` with the ``develop`` sub-command, but has the additional
+features that metadata is always pulled live from the ``pyron.ini`` file
+(rather than being copied into an ``egg-info`` directory and growing
+stale), and that you can easily turn packages back off.  You can turn
+them off with the "remove" or "rm" sub-command by either naming their
+directory, or using the package name itself::
+
+    (dev)$ pyron rm ./cursivepymag
+    (dev)$ pyron rm cursive.tools
+    (dev)$ pyron st
+    No packages are under development in this environment.
+    (dev)$ python -c 'import cursive.tools'
+    Traceback (most recent call last):
+      ...
+    ImportError: No module named cursive.tools
+    (dev)$ bin/cursive
+    zsh: no such file or directory: bin/cursive
 
 
-At this point, you are probably accustomed to entering each project's
-directory and running its ``setup.py`` with the ``develop`` command so
-that its packages, entry points, and console scripts become available
-within your virtual environment.  With Pyron, things are simpler.
+
+TODO
+----
+
+Before releasing this package, I should:
+
+* Get that .txt file appearing in the release .tar.gz.
+* Arrange it so that dependencies of development packages get installed.
+
 
 .. _virtualenv: pypi.python.org/pypi/virtualenv
-
- alternative to the stale repetition, mindless
-cargo-culting, and 
-
-
-The ``pyron`` command is designed to eliminate the vast reptition that
-characterizes the ``setup.py`` file of typical Python packages.  Instead
-of needing a setup file, ``pyron`` simply inspects your package to
-gather all of the information it needs to build, test, and distribute.
-And thanks to the fact that ``pyron`` uses the ``distutils`` for source
-distributions and the ``setuptools`` for building eggs, the results
-should be compatible with everything else in Python.
-
-Pyron is **still under early development**, so it is **not yet available
-as a package on PyPI**.  You should probably just be looking over the
-documentation at this point and letting Brandon know whether this looks
-like a good idea, or whether this kind of approach to package building
-deeply worries you.
-
-If you want to try Pyron out, fetch it from its development home on
-bitbucket::
-
- $ hg clone https://bitbucket.org/brandon/pyron/
- $ virtualenv v
- $ v/bin/python setup.py develop
- $ v/bin/pyron --help
-
-The secrets of how Pyron works
-------------------------------
-
-Pyron is currently a wrapper around ``virtualenv`` and the
-``setuptools``.  It creates a virtual environment named ``.pyron``,
-creates a ``setup.py`` there based on what it discovers by introspecting
-your package, and then actually *changes directory* to the location of
-``setup.py`` before running it to prevent the distribution utilities
-from exploding!  You can always look under this hidden directory to see
-what Pyron is doing if its behavior baffles you.  Note that the
-``setup.py`` is rebuilt fresh each time it runs; unlike the
-``setuptools``, Pyron will *not* get confused because it remembers
-things about how your project was configured ten minutes ago!
-
-What your Pyron-powered project has to look like
-------------------------------------------------
-
-To use Pyron, your project needs to consist of a directory with at
-least a ``README.txt`` and an ``__init__.py`` sitting next to each other
-inside of it.  Here is where ``pyron`` looks for the information found
-in a typical ``setup.py`` file:
-
-**packages**
-
-    Your project's ``README.txt`` file should be formatted as
-    Restructured Text, and should look something like this::
-
-        ``my.package`` -- Does exactly the things I need
-        ------------------------------------------------
-
-        There is, of course, no point in having a Python
-        package around, taking up disk space, unless it
-        does exactly what I need...
-
-    Your package's name is assumed to be the string inside of the double
-    back-quotes in the main title of your ``README.txt`` title.  It can
-    have as many dots in it as you like; all of the packages except the
-    last will be assumed to be namespace packages, and built as such.
-
-**name**
-
-    The source packages and eggs that you distribute will be given the
-    same name as your Python package, per best practices.
-
-**description**
-
-    The short description of your project will be taken from the rest of
-    the first line of your ``README.txt`` file: everything after the
-    hyphen, dash, or colon that follows your project name.
-
-**long_description**
-
-    The long description is built from the rest of your ``README.txt``
-    file, with the first two non-blank lines (the title and underline)
-    removed.
-
-**namespace_packages**
-
-    If your package name contains dots, then any parent packages are
-    assumed to be namespace packages automatically.  If your package is
-    named ``web.utils.url``, then ``web`` and ``web.utils`` will both be
-    made namespace packages.
-
-**version**, **author**, **url**
-
-    These project attributes are taken from the symbols ``__version__``,
-    ``__author__``, and ``__url__`` inside of your package's
-    ``__init__.py`` file.  Note that ``__author__`` should be a
-    string that the Python ``email.utils.parseaddr()`` function will
-    recognize as being a name and email address, such as::
-
-        Brandon Craig Rhodes <brandon@rhodesmill.org>
-
-As long as you make this information available using the above
-techniques, which are merely a codification of already existing Python
-best practices, then ``pyron`` will build both your ``setup.py`` and
-your project for you without requiring any further intervention.
-
-Using the ``pyron`` command
----------------------------
-
-The ``pyron`` command-line tool is how you build and distribute packages
-that follow the conventions outlined above.  A typical session might
-look like::
-
-    $ cd web.utils.url
-    $ ls
-    README.txt
-    __init___.py
-    rfc1738.py
-    urlobj.py
-
-::
-
-    $ pyron sdist
-    $ pyron bdist_egg
-    $ ls
-    README.txt
-    __init___.py
-    rfc1738.py
-    urlobj.py
-    web.utils.url-1.4-py2.5.egg
-    web.utils.url-1.4.tar.gz
-
-::
-
-    $ pyron python
-    >>> import web.utils.url
-    >>> web.utils.url.__version__
-    '0.4'
-    >>> ^D
-
-::
-
-    # Where "mycmd" is a console entry point:
-
-    $ pyron run mycmd
-    usage: mycmd [--help] [args]
-
-::
-
-    $ pyron register
-    $ pyron sdist upload
-    $ pyron bdist_egg upload
-
-If you peek under the hood, you will see that ``pyron`` does its work in
-a hidden directory under your project directory named ``.pyron``, where
-you can always look if you want to double-check the ``setup.py`` that
-``pyrun`` is generating and using.
