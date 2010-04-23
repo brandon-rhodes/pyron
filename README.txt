@@ -13,7 +13,7 @@ Developing with Pyron
 
 To see Pyron in action, install Ian Bicking's virtualenv_ tool and
 create a virtual environment to serve as your development environment.
-Install the Pyron package there.
+Install the Pyron package there. ::
 
     $ virtualenv dev
     $ cd dev
@@ -52,31 +52,29 @@ project that cannot be easily introspected from its contents::
 
 The version, however, is taken directly from the ``__version__`` symbol
 in the package's ``__init__.py`` file, to avoid having to maintain the
-same version number it two different places. ::
+same version number in two different places. ::
 
-    (dev)$ cat cursivetools/__init__.py
-    ...
+    (dev)$ grep __version__ cursivetools/__init__.py
     __version__ = '0.3'
-    ...
 
 The description that is placed on the Python Package Index for this
 package will be copied verbatim from ``README.txt``, which should start
 with a title that can be used for the short summary description on the
 Package Index::
 
-    (dev)$ cat cursivetools/README.txt
+    (dev)$ head -6 cursivetools/README.txt
     
     Tools for authoring restructured text files
     ===========================================
     
     This package provides a ``cursive`` command that is intended to become
     the core of a whole set of tools for working with `reStructured Text`_
-    ...
 
-By pulling version information from the package itself and documentation
-from the ``README.txt``, Pyron both enforces existing best practices and
-avoids making the developer repeat themselves by maintaining the same
-information in several places.
+By pulling version information from the package's code and documentation
+from its ``README.txt``, Pyron not only enforces good Python community
+customs, but it avoids either making the developer repeat the same
+information in several different places, or else write complicated
+``setup.py`` code to pull the information in from elsewhere.
 
 Activating Development Packages
 -------------------------------
@@ -90,7 +88,7 @@ This involves three things:
 * Any console scripts the package declares should be installed.
 
 None of these three things are true yet of the development packages in
-our example, because Python cannot yet see them.
+our example, because Python cannot yet see them. ::
 
     (dev)$ python -c 'import cursive.tools'
     Traceback (most recent call last):
@@ -113,8 +111,8 @@ and the "add" command to activate further projects::
 
 As you can see from the "status" command, the ``cursive.tools`` package
 is now under active development.  This means that Python will now be
-able to import it!  You can verify that Python loads the package
-directly from its development directory::
+able to import it!  You can verify that Python is now loading the
+package directly from its development directory::
 
     (dev)$ python
     >>> import cursive.tools
@@ -123,7 +121,7 @@ directly from its development directory::
     >>> exit()
 
 And the console script declared by ``cursive.tools`` is now available in
-the virtual environment as well.
+the virtual environment as well. ::
 
     (dev)$ bin/cursive
     Usage: cursive [options] <command> [options]
@@ -134,9 +132,9 @@ the virtual environment as well.
 
 The above output shows both that the ``cursive.tools`` package is fully
 up and running, and also that its one built-in entry point, that defines
-the "wc" sub-command, is active as well.  To see another entry point
-activate, we can add the other ``cursive.pymag`` package we downloaded
-to this virtual environment as well::
+the "wc" sub-command, is active as well.  To add another entry point, we
+can activate the ``cursive.pymag`` package that we downloaded earlier as
+well::
 
     (dev)$ pyron add cursivepymag
     (dev)$ pyron st
@@ -176,8 +174,8 @@ directory, or using the package name itself::
     (dev)$ bin/cursive
     zsh: no such file or directory: bin/cursive
 
-This makes it easy to quickly adapt the mix of active development
-packages and versions as you write and test your code.
+This makes it easy to quickly adjust the mix of active development
+packages as you write and test your code.
 
 Deploying Packages
 ------------------
@@ -204,19 +202,19 @@ commands above could also have been written::
     (dev)$ cd ..
 
 If you want the source distribution written to a local file without
-being made available yet to the entire world, use the "sdist"
-sub-command.  It prints out the name of the file it creates.
+being made available yet for the entire world, use the "sdist"
+sub-command.  It prints out the name of the file it creates. ::
 
     (dev)$ pyron sdist cursivetools
     ./cursive.tools-0.3.tar.gz
 
 Note that when Pyron builds a ``.tar.gz`` distribution, it includes
-most of the files in the development package, except that Pyron::
+most of the files in the development package, except that Pyron:
 
 * Ignores hidden files that begin with a period.
 * Ignores files whose names end with ``.pyc`` and ``.pyo``.
-* Does not include ``pyron.ini`` in the distribution.
-* Does not include ``entry_points.ini`` in the distribution.
+* Does not include the ``pyron.ini`` file.
+* Does not include the ``entry_points.ini`` file (if any).
 
 Before you run the "sdist" or "upload" sub-command, therefore, you
 should make sure that no temporary data or other unnecessary files are
