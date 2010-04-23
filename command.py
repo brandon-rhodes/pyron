@@ -2,6 +2,7 @@
 import argparse
 import os
 import shutil
+import subprocess
 import sys
 import tempfile
 from distutils.command.register import register as RegisterCommand
@@ -43,9 +44,14 @@ def cmd_add(args):
     paths = args.project
     for path in paths:
         path = normalize_project_path(path)
-        dist = pyron.project.Project(path).prdist
-        # WorkingSet.resolv(requirements, installer=?) to download them
+        project = pyron.project.Project(path)
+        dist = project.prdist
         pyron.install.add(dist)
+        if project.requirements:
+            print 'Package %r added successfully; it has %d requirements' % (
+                project.name, len(project.requirements))
+            print 'To install them, you can try running:'
+            print '    pip install %s' % (' '.join(project.requirements),)
 
 def cmd_egg(args):
     paths = args.project

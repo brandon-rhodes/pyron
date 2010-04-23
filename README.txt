@@ -222,16 +222,7 @@ to be compiled.  If your package needs to be compiled to operate, then
 you should use the normal ``setup.py`` mechanism; that's what it's good
 for: situations that are already complicated, where you need lots of
 control over a difficult build process.  Pyron, by constrast, is
-intended only for distributing Python-only packages.
-
-TODO
-----
-
-Before releasing this package, I should:
-
-* Get that .txt file appearing in the release .tar.gz.
-* Arrange it so that dependencies of development packages get installed.
-* Turn off the egg command.
+intended only for distributing pure-Python packages.
 
 
 .. _virtualenv: http://pypi.python.org/pypi/virtualenv/

@@ -18,6 +18,8 @@ import os
 import sys
 import setuptools.command.easy_install
 
+from pyron.exceptions import PyronError
+
 def bin_path():
     """Compute where console scripts should be installed."""
     return os.path.join(sys.prefix, 'bin')
@@ -107,7 +109,7 @@ def add(dist):
     """Add a Pyron project to our installation."""
     project_paths = pth_load()
     if dist.location in project_paths:
-        raise RuntimeError('already installed: ' + dist.location)
+        raise PyronError('already installed: ' + dist.location)
     project_paths.append(dist.location)
     add_scripts(dist)
     pth_save(project_paths)

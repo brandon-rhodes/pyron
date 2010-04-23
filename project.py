@@ -8,6 +8,7 @@ from fnmatch import fnmatch
 
 import pyron.config
 import pyron.readme
+from pyron.exceptions import PyronError
 from pyron.introspect import parse_project_init
 
 EXCLUDE_PATTERNS = ('.*', '*.pyc', '*.pyo', 'pyron.ini', 'entry_points.ini')
@@ -24,7 +25,7 @@ class Project(object):
       parses the ``entry_points.ini`` file for entry point information,
       if that file is present.
 
-    - `project.dddist` is a `distutils.dist.Distribution` instance
+    - `project.sddist` is a `setuptools.dist.Distribution` instance
       which needs the project documentation defined in ``README.txt``.
 
     """
@@ -59,7 +60,7 @@ class Project(object):
         field = self.config.get('package', 'author')
         self.author, self.author_email = email.utils.parseaddr(field)
         if not self.author:
-            raise RuntimeError(
+            raise PyronError(
                 'the "author" defined in your "pyron.ini" must include both'
                 ' a name and an email address, like "Ed <ed@example.com>"')
 
@@ -107,7 +108,7 @@ class Project(object):
 
     @property
     def sddist(self):
-        """Return a `distutils.dist.Distribution` for this project."""
+        """Return a `setuptools.dist.Distribution` for this project."""
         sddist = setuptools.dist.Distribution()
         sddist.metadata.name = self.name
         sddist.metadata.version = self.version

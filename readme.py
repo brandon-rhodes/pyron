@@ -5,6 +5,8 @@ import htmlentitydefs
 import re
 import os
 
+from pyron.exceptions import PyronError
+
 join = os.path.join
 
 README_NAMES = ('README', 'README.txt')
@@ -17,11 +19,11 @@ def find_readme(directory):
     candidates = [ join(directory, name) for name in README_NAMES ]
     candidates = filter(os.path.isfile, candidates)
     if not candidates:
-        raise RuntimeError('your project must include either %s'
-                           % ' or '.join(README_NAMES))
+        raise PyronError('your project must include either %s'
+                         % ' or '.join(README_NAMES))
     if len(candidates) > 1:
-        raise RuntimeError('your project cannot supply both %s'
-                           % ' and '.join(candidates))
+        raise PyronError('your project cannot supply both %s'
+                         % ' and '.join(candidates))
     return candidates[0]
 
 def inspect_readme(path):
@@ -29,13 +31,13 @@ def inspect_readme(path):
     try:
         f = codecs.open(path, 'U', 'ascii')
     except IOError, e:
-        raise RuntimeError('cannot open %s: %s' % (path, e.strerror))
+        raise PyronError('cannot open %s: %s' % (path, e.strerror))
     try:
         readme = f.read()
     except IOError, e:
-        raise RuntimeError('cannot read %s: %s' % (path, e.strerror))
+        raise PyronError('cannot read %s: %s' % (path, e.strerror))
     except UnicodeDecodeError:
-        raise RuntimeError(
+        raise PyronError(
             'because of the limitations of setuptools and the Python'
             ' Package Index, your %s file must contain Restructured Text'
             ' consisting only of ASCII characters' % path)
@@ -43,7 +45,7 @@ def inspect_readme(path):
         f.close()
 
     def format_error():
-        return RuntimeError(
+        return PyronError(
             'the beginning of your %s must look like (the package name can'
             ' omitted):\n\n``package`` -- brief description\n'
             '================================\n\n' % path)
