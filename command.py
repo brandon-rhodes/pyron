@@ -142,7 +142,11 @@ def run(argv):
 
     def cmd_help(args):
         if args.command:
-            subparsers.choices[args.command].print_help()
+            try:
+                subparsers.choices[args.command].print_help()
+            except KeyError:
+                sys.stderr.write('Unknown command %r\n' % (args.command,))
+                return 2
         else:
             parser.print_help()
 
