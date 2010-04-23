@@ -203,18 +203,25 @@ commands above could also have been written::
     (dev)$ pyron upload
     (dev)$ cd ..
 
-Note that when the "upload" builds the ``.tar.gz`` distribution, it will
-include every file in the development package that does not being with a
-period (since an initial period "." is how files and directories are
-"hidden" from normal view on a Unix system).  Before you "upload", you
-should therefore make sure that no temporary data or other unnecessary
-files are sitting inside of the development package's directory.  The
-exact rule is that Pyron::
+If you want the source distribution written to a local file without
+being made available yet to the entire world, use the "sdist"
+sub-command.  It prints out the name of the file it creates.
+
+    (dev)$ pyron sdist cursivetools
+    ./cursive.tools-0.3.tar.gz
+
+Note that when Pyron builds a ``.tar.gz`` distribution, it includes
+most of the files in the development package, except that Pyron::
 
 * Ignores hidden files that begin with a period.
 * Ignores files whose names end with ``.pyc`` and ``.pyo``.
 * Does not include ``pyron.ini`` in the distribution.
 * Does not include ``entry_points.ini`` in the distribution.
+
+Before you run the "sdist" or "upload" sub-command, therefore, you
+should make sure that no temporary data or other unnecessary files are
+sitting inside of the development package's directory, or those files
+will be included in the archive.
 
 Note that Pyron has *no* provision for building, or distributing,
 C-language extensions or shared libraries or other binary code that has
