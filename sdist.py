@@ -105,10 +105,10 @@ def write_sdist(project, outfile):
 
     tar.close()
 
-def save_temporary_sdist(project, tmpdir):
-    """Create a temporary .tar.gz file and save a tarfile into it."""
+def save_sdist(project, dirpath):
+    """Create a correctly named .tar.gz file and save the sdist into it."""
     filename = '%s-%s.tar.gz' % (project.name, project.version)
-    filepath = os.path.join(tmpdir, filename)
+    filepath = os.path.join(dirpath, filename)
     outfile = open(filepath, 'w')
     write_sdist(project, outfile)
     outfile.close()

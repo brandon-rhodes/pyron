@@ -78,6 +78,14 @@ def cmd_remove(args):
         else:
             complain('not installed: %s' % (thing,))
 
+def cmd_sdist(args):
+    paths = args.project
+    for path in paths:
+        path = normalize_project_path(path)
+        project = pyron.project.Project(path)
+        sddist = project.sddist
+        print pyron.sdist.save_sdist(project, '.')
+
 def cmd_status(arg):
     project_paths = pyron.install.pth_load()
     binpath = pyron.install.bin_path()
@@ -105,7 +113,7 @@ def cmd_upload(args):
 
         tmpdir = tempfile.mkdtemp(prefix='pyron-', suffix='-upload')
         try:
-            sdist_path = pyron.sdist.save_temporary_sdist(project, tmpdir)
+            sdist_path = pyron.sdist.save_sdist(project, tmpdir)
             cmd = UploadCommand(sddist)
             cmd.initialize_options()
             cmd.finalize_options()
@@ -135,10 +143,10 @@ def run(argv):
                    help='Pyron project path (defaults to current directory)')
     p.set_defaults(func=cmd_add)
 
-    p = sap('egg', help='Build an egg for distribution')
-    p.add_argument('project', default='.', nargs='+',
-                   help='Pyron project path')
-    p.set_defaults(func=cmd_egg)
+    #p = sap('egg', help='Build an egg for distribution')
+    #p.add_argument('project', default='.', nargs='+',
+    #               help='Pyron project path')
+    #p.set_defaults(func=cmd_egg)
 
     p = sap('register', help='Register a package with PyPI')
     p.add_argument('project', default='.', nargs='+',
@@ -149,6 +157,11 @@ def run(argv):
     p.add_argument('project', default='.', nargs='*',
                    help='Pyron project path (defaults to current directory)')
     p.set_defaults(func=cmd_remove)
+
+    p = sap('sdist', help='Save a .tar.gz source distribution to this directory')
+    p.add_argument('project', default='.', nargs='*',
+                   help='Pyron project path (defaults to current directory)')
+    p.set_defaults(func=cmd_sdist)
 
     p = sap('status', help='List the currently active projects ("st")')
     p.set_defaults(func=cmd_status)
