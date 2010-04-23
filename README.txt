@@ -2,6 +2,95 @@
 ``pyron`` -- The DRY Python package builder
 ===========================================
 
+Pyron is a simple tool that lets you develop and distribute Python
+packages while avoiding the complexity of writing and maintaining a
+"setup.py" file.  With Pyron, each package you are developing needs only
+a small ``pyron.ini`` file, whose format is designed to help you avoid
+repeating yourself.
+
+Developing with Pyron
+---------------------
+
+To see Pyron in action, install Ian Bicking's virtualenv_ tool and
+create a virtual environment to serve as your development environment::
+
+    $ virtualenv dev
+    $ cd dev
+    $ source bin/activate
+    (dev)$ ls
+    bin/  include/  lib/
+
+Two packages that are currently developed using Pyron are the
+``cursive`` tools that you might have seen on the Python Package Index.
+You can check out their development trees very simply, using Mercurial::
+
+    (dev)$ hg clone http://bitbucket.org/brandon/cursivepymag
+    (dev)$ hg clone http://bitbucket.org/brandon/cursivetools
+    (dev)$ ls
+    bin/  cursivepymag/  cursivetools/  include/  lib/
+
+You can always identify a Pyron-powered development package because it
+will have a ``pyron.ini`` file at the top level. ::
+
+    (dev)$ ls cursivetools
+    README.txt  __init__.py  cursive.py  entry_points.ini  pyron.ini  wc.py
+
+The ``pyron.ini`` file contains all of the essential metadata about a
+project that cannot be easily introspected from its contents::
+
+    (dev)$ cat cursivetools/pyron.ini
+    [package]
+    name = cursive.tools
+    author = Brandon Craig Rhodes <brandon@rhodesmill.org>
+    url = http://bitbucket.org/brandon/cursivetools/
+    requires = docutils
+
+The version, however, is taken directly from the ``__version__`` symbol
+in the package's ``__init__.py`` file, to avoid having to maintain the
+same version number it two different places. ::
+
+    (dev)$ cat cursivetools/__init__.py
+    ...
+    __version__ = '0.3'
+    ...
+
+The description that is placed on the Python Package Index for this
+package will be copied verbatim from ``README.txt``, which should start
+with a title that can be used for the short summary description on the
+Index::
+
+    (dev)$ cat cursivetools/README.txt
+    
+    Tools for authoring restructured text files
+    ===========================================
+    
+    This package provides a ``cursive`` command that is intended to become
+    the core of a whole set of tools for working with `reStructured Text`_
+    ...
+
+By pulling version information from the package itself and documentation
+from the ``README.txt``, Pyron both enforces existing best practices and
+avoids making the developer repeat themselves by maintaining the same
+information in several places.
+
+Activating Development Packages
+-------------------------------
+
+When developing a package, you need more than simply having files
+present on your hard drive: you need them
+
+
+At this point, you are probably accustomed to entering each project's
+directory and running its ``setup.py`` with the ``develop`` command so
+that its packages, entry points, and console scripts become available
+within your virtual environment.  With Pyron, things are simpler.
+
+.. _virtualenv: pypi.python.org/pypi/virtualenv
+
+ alternative to the stale repetition, mindless
+cargo-culting, and 
+
+
 The ``pyron`` command is designed to eliminate the vast reptition that
 characterizes the ``setup.py`` file of typical Python packages.  Instead
 of needing a setup file, ``pyron`` simply inspects your package to
