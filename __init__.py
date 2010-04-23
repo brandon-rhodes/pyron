@@ -8,7 +8,7 @@ command-line tool for building and installing packages.
 """
 from __future__ import absolute_import
 
-__version__ = '0.1.1'
+__version__ = '0.2'
 __testrunner__ = 'nose'
 __author__ = 'Brandon Craig Rhodes <brandon@rhodesmill.org>'
 __url__ = 'http://bitbucket.org/brandon/pyron/'
