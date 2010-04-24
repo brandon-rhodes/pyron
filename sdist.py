@@ -73,7 +73,13 @@ def tar_add(tar, pathparts, text, mtime):
     tarinfo.gname = 'nobody'
     tar.addfile(tarinfo, StringIO(text))
 
-def write_sdist(project, outfile):
+def k(n):
+    """Return the number of kilobytes in `n` bytes."""
+    if n < 1024:
+        n += 1023  # to make nonzero sizes look like at least like 1k
+    return n / 1024
+
+def write_sdist(project, outfile, verbose=False):
     """Write a gzipped tarfile sdist for `project` to `outfile`."""
 
     tar = tarfile.open(mode='w:gz', fileobj=outfile)
@@ -96,6 +102,8 @@ def write_sdist(project, outfile):
         f.close()
         pathparts = pkgdir + os.path.split(relpath)
         tar_add(tar, pathparts, text, now)
+        if verbose:
+            print ' %4dk  %s' % (k(len(text)), relpath)
 
     # Finally, add a setup.py file and a MANIFEST.in file.
 
@@ -104,12 +112,16 @@ def write_sdist(project, outfile):
     tar_add(tar, [ base, 'MANIFEST.in'], 'recursive-include src *\n', now)
 
     tar.close()
+    if verbose:
+        print
+        print ' %4dk  Distribution size (compressed)' % (
+            k(len(outfile.getvalue())),)
 
-def save_sdist(project, dirpath):
+def save_sdist(project, targz, dirpath):
     """Create a correctly named .tar.gz file and save the sdist into it."""
     filename = '%s-%s.tar.gz' % (project.name, project.version)
     filepath = os.path.join(dirpath, filename)
     outfile = open(filepath, 'w')
-    write_sdist(project, outfile)
+    outfile.write(targz.getvalue())
     outfile.close()
     return filepath

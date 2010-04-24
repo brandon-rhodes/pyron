@@ -145,7 +145,7 @@ class Project(object):
                     del dirnames[n]
 
             # Include appropriate files.
-            for filename in filenames:
+            for filename in sorted(filenames):
                 if self.should_include(filename):
                     filepath = os.path.join(dirpath, filename)
                     yield filepath, os.path.relpath(filepath, self.dir)

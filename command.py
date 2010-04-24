@@ -1,10 +1,11 @@
-"""The Pyron command-line tool."""
+"""The Pyron command-line tool, with all of its sub-commands."""
+
 import argparse
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
+from StringIO import StringIO
 from distutils.command.register import register as RegisterCommand
 from distutils.command.upload import upload as UploadCommand
 
@@ -34,8 +35,7 @@ def normalize_project_path(path):
 
     """
     a = os.path.abspath(path)
-    b = os.path.basename(a)
-    if b == 'pyron.ini':
+    if os.path.basename(a) == 'pyron.ini':
         return os.path.dirname(a)
     else:
         return a
@@ -89,7 +89,9 @@ def cmd_sdist(args):
     for path in paths:
         path = normalize_project_path(path)
         project = pyron.project.Project(path)
-        print pyron.sdist.save_sdist(project, '.')
+        targz = StringIO()
+        pyron.sdist.write_sdist(project, targz)
+        print pyron.sdist.save_sdist(project, targz, '.')
 
 def cmd_status(arg):
     project_paths = pyron.install.pth_load()
@@ -118,7 +120,15 @@ def cmd_upload(args):
 
         tmpdir = tempfile.mkdtemp(prefix='pyron-', suffix='-upload')
         try:
-            sdist_path = pyron.sdist.save_sdist(project, tmpdir)
+            targz = StringIO()
+            print
+            pyron.sdist.write_sdist(project, targz, verbose=True)
+            print
+            print 'Upload this distribution? [n]',
+            decision = raw_input()
+            if not decision.strip().lower().startswith('y'):
+                return 1
+            sdist_path = pyron.sdist.save_sdist(project, targz, tmpdir)
             cmd = UploadCommand(sddist)
             cmd.initialize_options()
             cmd.finalize_options()
