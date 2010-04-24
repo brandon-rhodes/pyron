@@ -127,7 +127,8 @@ def install_import_hook(project_dirs):
         # removed.
 
         pkg_resources.working_set.add(dist)
-        sys.path.remove(dist.location)
+        if dist.location in sys.path:
+            sys.path.remove(dist.location)
 
     if error:
         sys.stderr.write('Warning: Pyron environment damaged;'
